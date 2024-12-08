@@ -1,0 +1,43 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Audacia.UnitTest.Dependency", "src\Audacia.UnitTest.Dependency\Audacia.UnitTest.Dependency.csproj", "{8455C499-2346-4DB8-A65A-9647E857C5FE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{35389AA3-5A35-48E4-88A1-D212CF710DE5}"
+	ProjectSection(SolutionItems) = preProject
+		src\.editorconfig = src\.editorconfig
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{12814FBC-1E3D-4D3E-B156-FD32905EA0F2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "helpers", "helpers", "{5961AD99-15CB-4158-A83E-A54B2D6F9E90}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Audacia.UnitTest.Dependency.Tests", "tests\Audacia.UnitTest.Dependency.Tests\Audacia.UnitTest.Dependency.Tests.csproj", "{1BF31E8A-706C-407F-B5BF-E127A014350A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Audacia.UnitTest.Dependency.Tests.ExampleProject", "tests\helpers\Audacia.UnitTest.Dependency.Tests.ExampleProject\Audacia.UnitTest.Dependency.Tests.ExampleProject.csproj", "{2B42445D-181E-475B-B82B-2CAB29791D27}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8455C499-2346-4DB8-A65A-9647E857C5FE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8455C499-2346-4DB8-A65A-9647E857C5FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8455C499-2346-4DB8-A65A-9647E857C5FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8455C499-2346-4DB8-A65A-9647E857C5FE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1BF31E8A-706C-407F-B5BF-E127A014350A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1BF31E8A-706C-407F-B5BF-E127A014350A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1BF31E8A-706C-407F-B5BF-E127A014350A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1BF31E8A-706C-407F-B5BF-E127A014350A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2B42445D-181E-475B-B82B-2CAB29791D27}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2B42445D-181E-475B-B82B-2CAB29791D27}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2B42445D-181E-475B-B82B-2CAB29791D27}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2B42445D-181E-475B-B82B-2CAB29791D27}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{8455C499-2346-4DB8-A65A-9647E857C5FE} = {35389AA3-5A35-48E4-88A1-D212CF710DE5}
+		{5961AD99-15CB-4158-A83E-A54B2D6F9E90} = {12814FBC-1E3D-4D3E-B156-FD32905EA0F2}
+		{1BF31E8A-706C-407F-B5BF-E127A014350A} = {12814FBC-1E3D-4D3E-B156-FD32905EA0F2}
+		{2B42445D-181E-475B-B82B-2CAB29791D27} = {5961AD99-15CB-4158-A83E-A54B2D6F9E90}
+	EndGlobalSection
+EndGlobal
