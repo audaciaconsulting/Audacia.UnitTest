@@ -8,9 +8,7 @@ The `Audacia.UnitTest` repo contains multiple packages with each having a purpos
 ## Audacia.UnitTest.Dependency
 The purpose of `Audacia.UnitTest.Dependency` is to help engineers quickly configure and build the test target, with by default creating real instance of all dependencies of dependencies for the test target. 
 
-Customisation is provided out of the box in two ways.
-1. Providing `BlueprintDependency<TDependency>` within the solution as a generic method.
-1. Providing the `TestTargetBuilder` with the customised dependency on creation.
+Customisation is provided out of the box in two way creation.
 
 For more details on how to use `Audacia.UnitTest.Dependency` see the package [README](./src/Audacia.UnitTest.Dependency/README.md).
 
