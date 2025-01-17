@@ -1,31 +1,51 @@
-﻿using Audacia.Commands;
+﻿using System.Text;
+using System.Text.Json;
+using Audacia.Commands;
 using Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.Asset.Validate;
-using Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.Stud;
 using Microsoft.Extensions.Logging;
 
 namespace Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.Asset.Add;
 
+/// <summary>
+///
+/// </summary>
+/// <param name="logger"></param>
+/// <param name="validateAssetCommandHandler"></param>
+/// <param name="httpClientFactory"></param>
 public class AddAssetCommandHandler(
     ILogger<AddAssetCommandHandler> logger,
-    IValidateAssetCommand validateAssetCommand,
-    IMockCommandHandler mockCommandHandler) : IAddAssetCommandHandler
+    IValidateAssetCommandHandler validateAssetCommandHandler,
+    IHttpClientFactory httpClientFactory) : IAddAssetCommandHandler
 {
+    /// <summary>
+    ///
+    /// </summary>
+    /// <param name="command"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     public async Task<CommandResult<AddAssetCommandResultDto>> HandleAsync(
         AddAssetCommand command,
         CancellationToken cancellationToken = default)
     {
         logger.LogInformation("Entry: Adding asset with name: {@NewAssetName}", command.Name);
 
-        var mockCommandResult = await mockCommandHandler.HandleAsync(new MockCommand(), cancellationToken);
+        var validateAssetCommand = new ValidateAssetCommand(command);
+        var validationResult = await validateAssetCommandHandler.HandleAsync(validateAssetCommand, cancellationToken);
 
-        if (!mockCommandResult.IsSuccess)
+        if (!validationResult.IsSuccess)
         {
-            return CommandResult.Failure<AddAssetCommandResultDto>(mockCommandResult.Errors.ToArray());
+            return CommandResult.FromExistingResult<AddAssetCommandResultDto>(validationResult);
         }
 
-        var result = new AddAssetCommandResultDto(
-            mockCommandResult.Output.ResultOne,
-            mockCommandResult.Output.ResultTwo);
+        using var httpClient = httpClientFactory.CreateClient();
+        httpClient.BaseAddress = new Uri("https://localhost:111111");
+
+        var json = JsonSerializer.Serialize(command);
+        using var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        using var response = await httpClient.PostAsync(new Uri(string.Empty), content, cancellationToken);
+
+        var result = new AddAssetCommandResultDto(validationResult, response.StatusCode);
         return CommandResult.WithResult(result);
     }
 }

@@ -4,15 +4,14 @@ using System.Collections.Concurrent;
 using System.Linq.Expressions;
 using System.Reflection;
 using Audacia.UnitTest.Dependency.Attributes;
-using Audacia.UnitTest.Dependency.Customisations;
 using Audacia.UnitTest.Dependency.Exceptions;
 using Audacia.UnitTest.Dependency.Helpers;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
-using Moq;
 
 /// <summary>
-///
+/// A builder for constructing a target for ease of use dependency building.
 /// </summary>
 public class TestTargetBuilder
 {
@@ -47,38 +46,23 @@ public class TestTargetBuilder
         this._excludeNamespaces = excludeNamespaces;
     }
 
-    /// <summary>
-    /// Allows to pass in a configured dependency when constructing the target type.
-    /// </summary>
-    /// <param name="service"></param>
-    /// <param name="type"></param>
-    /// <returns></returns>
-    /// <exception cref="TestTargetBuilderException"></exception>
-    public virtual TestTargetBuilder WithDependency(
+    private TestTargetBuilder WithDependency(
         object service,
         Type type)
     {
         ArgumentNullException.ThrowIfNull(service);
         ArgumentNullException.ThrowIfNull(type);
 
-        if (this._services.ContainsKey(type))
+        if (!this._services.TryAdd(type, service))
         {
             throw new TestTargetBuilderException("This service has already been added", nameof(service));
         }
 
-        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Mock<>))
-        {
-            throw new TestTargetBuilderException(
-                "Should not be using a mock here, you should instead be passing the instance. If you intend for this to be mocked, call .Object on the mock.",
-                nameof(service));
-        }
-
-        this._services.Add(type, service);
         return this;
     }
 
     /// <summary>
-    ///
+    /// Configures the Test Target Builder with an instance of one of it's dependencies.
     /// </summary>
     /// <param name="service"></param>
     /// <typeparam name="TDependency"></typeparam>
@@ -92,18 +76,25 @@ public class TestTargetBuilder
     }
 
     /// <summary>
-    ///
+    /// Configures the Test Target Builder with an blueprint of one of it's dependencies.
     /// </summary>
-    /// <param name="service"></param>
-    /// <typeparam name="TDependency"></typeparam>
-    /// <returns></returns>
-    public TestTargetBuilder WithDependency<TDependency>(IBlueprintDependency<TDependency> service)
+    /// <param name="blueprint">An instance of a blueprint for a dependency.</param>
+    /// <typeparam name="TDependency">The type of the dependency.</typeparam>
+    /// <returns>The Test Target builder.</returns>
+    /// <exception cref="TestTargetBuilderException">If multiple blueprints for the same type have being configured.</exception>
+    public TestTargetBuilder WithBlueprint<TDependency>(IBlueprintDependency<TDependency> blueprint)
         where TDependency : class
     {
-        ArgumentNullException.ThrowIfNull(service);
+        ArgumentNullException.ThrowIfNull(blueprint);
 
         var type = typeof(TDependency);
-        return WithDependency(service.Build(), type);
+
+        if (!this._blueprints.TryAdd(type, blueprint))
+        {
+            throw new TestTargetBuilderException("This blueprint has already been added", nameof(blueprint));
+        }
+
+        return this;
     }
 
     /// <summary>
@@ -132,48 +123,6 @@ public class TestTargetBuilder
         where TTarget : class
     {
         return (TTarget)this.GetOrCreateService(typeof(TTarget), []);
-    }
-
-    /// <summary>
-    /// Allows customisation of a dependency which has a blueprint defined.
-    /// </summary>
-    /// <param name="setupExpression"></param>
-    /// <param name="result"></param>
-    /// <typeparam name="TDependency"></typeparam>
-    /// <typeparam name="TResult"></typeparam>
-    /// <returns></returns>
-    /// <exception cref="BlueprintDependencyException"></exception>
-    /// <exception cref="ArgumentException"></exception>
-    public TestTargetBuilder Customise<TDependency, TResult>(
-        Expression<Func<TDependency, TResult>> setupExpression,
-        TResult result)
-        where TDependency : class
-        where TResult : class
-    {
-        ArgumentNullException.ThrowIfNull(setupExpression);
-        ArgumentNullException.ThrowIfNull(result);
-
-        ValidateCustomiseExpression(setupExpression);
-
-        var dependencyType = typeof(TDependency);
-
-        var blueprintDependency = this.FindBlueprintDependency<TDependency>();
-        if (blueprintDependency == null)
-        {
-            throw new BlueprintDependencyException(
-                $"Not able to find a blueprint for dependency of type {dependencyType.FullName}, unable to add customisations without blueprint.");
-        }
-
-        var blueprintCustomisation = new BlueprintCustomisation<TDependency, TResult>(setupExpression, result);
-
-        if (blueprintDependency is { } dependency)
-        {
-            dependency.Customisations.Add(blueprintCustomisation);
-
-            this._blueprints.TryAdd(dependencyType, dependency);
-        }
-
-        return this;
     }
 
     private static string GetErrorMessage(
@@ -255,7 +204,21 @@ public class TestTargetBuilder
         var firstImplementationType = types.FirstOrDefault(typeToResolve.IsAssignableFrom);
         if (firstImplementationType == null)
         {
-            return null;
+            var implementationTypes = types.Where(type => type is { IsAbstract: false, IsInterface: false }).Where(
+                type => type.GetInterfaces().Any(
+                    i => i.IsGenericType && i.GetGenericTypeDefinition() == typeToResolve.GetGenericTypeDefinition()));
+
+            var genericImplementationType = implementationTypes.FirstOrDefault(
+                it => it is { IsGenericType: true, ContainsGenericParameters: true });
+
+            if (genericImplementationType == null)
+            {
+                return null;
+            }
+
+            parentTypes.Add(typeToResolve.Name);
+
+            return this.GetOrCreateService(genericImplementationType, parentTypes);
         }
 
         parentTypes.Add(typeToResolve.Name);
@@ -350,16 +313,30 @@ public class TestTargetBuilder
             return null;
         }
 
-        var mockType = typeof(Mock<>).MakeGenericType(type);
-        var mockConstructor = mockType.GetConstructors().First();
-        var service = mockConstructor.Invoke(null);
+        var loggerArgType = type.GenericTypeArguments.FirstOrDefault();
 
-        var mockedProperties = mockType.GetProperties();
-        var objectProperty = Array.Find(
-            mockedProperties,
-            propertyInfo => propertyInfo.Name == nameof(Mock.Object) && propertyInfo.PropertyType == type);
+        using var nullLoggerFactory = new NullLoggerFactory();
 
-        return objectProperty?.GetValue(service);
+        if (loggerArgType == null)
+        {
+            return nullLoggerFactory.CreateLogger(string.Empty);
+        }
+
+        var loggerType = typeof(NullLogger<>).MakeGenericType(loggerArgType);
+        var logger = Activator.CreateInstance(loggerType);
+
+        return logger;
+
+        // var mockType = typeof(object).MakeGenericType(type);
+        // var mockConstructor = mockType.GetConstructors().First();
+        // var service = mockConstructor.Invoke(null);
+        //
+        // var mockedProperties = mockType.GetProperties();
+        // var objectProperty = Array.Find(
+        //     mockedProperties,
+        //     propertyInfo => propertyInfo.Name == "Object" && propertyInfo.PropertyType == type);
+        //
+        // return objectProperty?.GetValue(service);
     }
 
     private object? GetOptions(

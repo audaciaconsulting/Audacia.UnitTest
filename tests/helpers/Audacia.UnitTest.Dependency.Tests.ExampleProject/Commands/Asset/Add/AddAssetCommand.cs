@@ -2,7 +2,8 @@
 
 namespace Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.Asset.Add;
 
-public class AddAssetCommand : ICommand
-{
-    public string Name { get; set; }
-}
+/// <summary>
+///
+/// </summary>
+/// <param name="Name"></param>
+public record AddAssetCommand(string Name) : ICommand;
