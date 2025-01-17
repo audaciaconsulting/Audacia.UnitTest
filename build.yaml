@@ -1,0 +1,36 @@
+name: $(Year:yy)$(DayOfYear).$(Rev:r)
+trigger:
+  - master
+pr:
+  branches:
+    include:
+      - master
+resources:
+  repositories:
+    - repository: templates
+      type: github
+      endpoint: shared-github
+      name: audaciaconsulting/Audacia.Build
+pool:
+  vmImage: windows-2022
+
+stages:
+- stage: Stage_Build
+  displayName: Build
+  jobs: 
+  - template: src/build/dotnet/jobs/nuget-package.job.yaml@templates
+    parameters:
+      projects: 'src/**/*.csproj'
+      excludePaths: '*.Test*.csproj'
+
+- stage: Stage_Release
+  displayName: Release
+  dependsOn: Stage_Build
+  condition: >
+    and(
+      succeeded(),
+      notIn(variables['Build.Reason'], 'PullRequest', 'Schedule'),
+      eq(dependencies.Stage_Build.outputs['Job_Build.UpdateVersions.ShouldPublish'], true)
+    )
+  jobs:
+    - template: src/deployment/nuget/jobs/internal-public-nuget-package.job.yaml@templates
