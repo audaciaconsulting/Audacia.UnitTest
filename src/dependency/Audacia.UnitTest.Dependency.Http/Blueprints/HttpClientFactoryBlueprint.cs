@@ -1,7 +1,6 @@
-﻿using Audacia.UnitTest.Dependency.Helpers.Http;
-using NSubstitute;
+﻿using NSubstitute;
 
-namespace Audacia.UnitTest.Dependency.Tests.ExampleProject.Blueprints;
+namespace Audacia.UnitTest.Dependency.Http.Blueprints;
 
 public class HttpClientFactoryBlueprint : BlueprintDependency<IHttpClientFactory>
 {
@@ -19,8 +18,8 @@ public class HttpClientFactoryBlueprint : BlueprintDependency<IHttpClientFactory
     public override IHttpClientFactory Build()
     {
         var httpClientFactory = Substitute.For<IHttpClientFactory>();
-        using var httpClientFromBlueprint = new HttpClientBlueprint().Build();
-        using var httpClient = httpClientFactory.CreateClient();
+        var httpClientFromBlueprint = new HttpClientBlueprint(_handler).Build();
+        var httpClient = httpClientFactory.CreateClient();
         httpClient.Returns(httpClientFromBlueprint);
 
         return httpClientFactory;

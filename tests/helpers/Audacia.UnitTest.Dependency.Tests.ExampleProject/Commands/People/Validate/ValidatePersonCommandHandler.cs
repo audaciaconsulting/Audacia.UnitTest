@@ -1,5 +1,4 @@
 ﻿using Audacia.Commands;
-using Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.Asset.Validate;
 using Microsoft.Extensions.Logging;
 
 namespace Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.People.Validate;
@@ -16,17 +15,21 @@ public class ValidatePersonCommandHandler(ILogger<ValidatePersonCommandHandler> 
     /// <param name="command"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public async Task<CommandResult> HandleAsync(
+    public Task<CommandResult> HandleAsync(
         ValidatePersonCommand command,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(command);
 
+        logger.LogInformation("Entry: Validating person with Name: {@ValidatePersonName}", command.Person.Name);
+
         if (command.Person.Name.Length > 25)
         {
-            return CommandResult.Failure("Person name cannot be longer than 25 characters.");
+            logger.LogWarning("Exit: Person name is too long");
+            return Task.FromResult(CommandResult.Failure("Person name cannot be longer than 25 characters."));
         }
 
-        return CommandResult.Success();
+        logger.LogInformation("Exit: Person is valid");
+        return Task.FromResult(CommandResult.Success());
     }
 }

@@ -15,17 +15,21 @@ public class ValidateAssetCommandHandler(ILogger<ValidateAssetCommandHandler> lo
     /// <param name="command"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public async Task<CommandResult> HandleAsync(
+    public Task<CommandResult> HandleAsync(
         ValidateAssetCommand command,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(command);
 
+        logger.LogInformation("Entry: Validating asset with Name: {@ValidateAssetName}", command.Asset.Name);
+
         if (command.Asset.Name.Length > 10)
         {
-            return CommandResult.Failure("Asset name cannot be longer than 10 characters.");
+            logger.LogWarning("Exit: Asset name is too long");
+            return Task.FromResult(CommandResult.Failure("Asset name cannot be longer than 10 characters."));
         }
 
-        return CommandResult.Success();
+        logger.LogInformation("Exit: Asset is valid");
+        return Task.FromResult(CommandResult.Success());
     }
 }

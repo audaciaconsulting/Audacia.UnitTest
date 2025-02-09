@@ -2,6 +2,7 @@
 
 namespace Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.Asset.Add;
 
-public interface IAddAssetCommandHandler : ICommandHandler<AddAssetCommand, AddAssetCommandResultDto>
-{
-}
+/// <summary>
+/// Interface for adding a new asset.
+/// </summary>
+public interface IAddAssetCommandHandler : ICommandHandler<AddAssetCommand, AddAssetCommandResultDto>;

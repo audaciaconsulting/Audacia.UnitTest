@@ -1,6 +1,5 @@
 ﻿using Audacia.Commands;
 using Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.Job.Validate;
-using Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.People.Validate;
 using Microsoft.Extensions.Logging;
 
 namespace Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.Job.Add;

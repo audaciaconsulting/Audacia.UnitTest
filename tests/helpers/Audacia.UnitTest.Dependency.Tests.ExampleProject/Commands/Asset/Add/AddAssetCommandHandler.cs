@@ -37,13 +37,26 @@ public class AddAssetCommandHandler(
             return CommandResult.FromExistingResult<AddAssetCommandResultDto>(validationResult);
         }
 
+        return await AddAssetAsync(command, validationResult, cancellationToken);
+    }
+
+    private async Task<CommandResult<AddAssetCommandResultDto>> AddAssetAsync(
+        AddAssetCommand command,
+        CommandResult validationResult,
+        CancellationToken cancellationToken)
+    {
         using var httpClient = httpClientFactory.CreateClient();
-        httpClient.BaseAddress = new Uri("https://localhost:111111");
 
         var json = JsonSerializer.Serialize(command);
         using var content = new StringContent(json, Encoding.UTF8, "application/json");
 
         using var response = await httpClient.PostAsync(new Uri(string.Empty), content, cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            return CommandResult.Failure<AddAssetCommandResultDto>(
+                $"None successful code returned: {response.StatusCode}");
+        }
 
         var result = new AddAssetCommandResultDto(validationResult, response.StatusCode);
         return CommandResult.WithResult(result);

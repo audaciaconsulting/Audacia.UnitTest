@@ -2,6 +2,7 @@
 
 namespace Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.People.Add;
 
-public interface IAddPersonCommandHandler : ICommandHandler<AddPersonCommand, AddPersonCommandResultDto>
-{
-}
+/// <summary>
+/// Interface for adding a new person.
+/// </summary>
+public interface IAddPersonCommandHandler : ICommandHandler<AddPersonCommand, AddPersonCommandResultDto>;

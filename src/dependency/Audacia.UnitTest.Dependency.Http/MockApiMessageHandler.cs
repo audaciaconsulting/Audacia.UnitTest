@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using RichardSzalay.MockHttp;
 
-namespace Audacia.UnitTest.Dependency.Helpers.Http;
+namespace Audacia.UnitTest.Dependency.Http;
 
 public class MockApiMessageHandler : MockHttpMessageHandler
 {

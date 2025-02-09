@@ -1,4 +1,6 @@
-﻿namespace Audacia.UnitTest.Dependency;
+﻿using Audacia.CodeAnalysis.Analyzers.Helpers.MethodLength;
+
+namespace Audacia.UnitTest.Dependency;
 
 using System.Collections.Concurrent;
 using System.Linq.Expressions;
@@ -177,17 +179,6 @@ public class TestTargetBuilder
         return buildBlueprintDependencyMethod.Invoke(blueprintDependency, null);
     }
 
-
-    private static void ValidateCustomiseExpression<TDependency, TResult>(
-        Expression<Func<TDependency, TResult>> setupExpression)
-        where TDependency : class where TResult : class
-    {
-        if (setupExpression.Body is not MethodCallExpression)
-        {
-            throw new ArgumentException("Setup expression must be a method call.", nameof(setupExpression));
-        }
-    }
-
     private object? GetInterfaceService(
         Type typeToResolve,
         ICollection<string> parentTypes)
@@ -197,33 +188,48 @@ public class TestTargetBuilder
             return null;
         }
 
-        var assembly = typeToResolve.Assembly;
-        var startingProjectNamespace = assembly.FullName!.Split('.').First();
-        var types = GetAllTypes(startingProjectNamespace);
+        var types = GetTypesFromAssembly(typeToResolve);
 
         var firstImplementationType = types.FirstOrDefault(typeToResolve.IsAssignableFrom);
         if (firstImplementationType == null)
         {
-            var implementationTypes = types.Where(type => type is { IsAbstract: false, IsInterface: false }).Where(
-                type => type.GetInterfaces().Any(
-                    i => i.IsGenericType && i.GetGenericTypeDefinition() == typeToResolve.GetGenericTypeDefinition()));
-
-            var genericImplementationType = implementationTypes.FirstOrDefault(
-                it => it is { IsGenericType: true, ContainsGenericParameters: true });
-
-            if (genericImplementationType == null)
-            {
-                return null;
-            }
-
-            parentTypes.Add(typeToResolve.Name);
-
-            return this.GetOrCreateService(genericImplementationType, parentTypes);
+            return GetInterfaceFromGenericDefinition(typeToResolve, parentTypes, types);
         }
 
         parentTypes.Add(typeToResolve.Name);
 
         return this.GetOrCreateService(firstImplementationType, parentTypes);
+    }
+
+    private object? GetInterfaceFromGenericDefinition(
+        Type typeToResolve,
+        ICollection<string> parentTypes,
+        List<Type> types)
+    {
+        var implementationTypes = types.Where(type => type is { IsAbstract: false, IsInterface: false }).Where(
+            type => type.GetInterfaces().Any(
+                interfaceType => interfaceType.IsGenericType && interfaceType.GetGenericTypeDefinition() ==
+                    typeToResolve.GetGenericTypeDefinition()));
+
+        var genericImplementationType = implementationTypes.FirstOrDefault(
+            it => it is { IsGenericType: true, ContainsGenericParameters: true });
+
+        if (genericImplementationType == null)
+        {
+            return null;
+        }
+
+        parentTypes.Add(typeToResolve.Name);
+
+        return this.GetOrCreateService(genericImplementationType, parentTypes);
+    }
+
+    private static List<Type> GetTypesFromAssembly(Type typeToResolve)
+    {
+        var assembly = typeToResolve.Assembly;
+        var startingProjectNamespace = assembly.FullName!.Split('.').First();
+        var types = GetAllTypes(startingProjectNamespace).ToList();
+        return types;
     }
 
     private object? GetClassService(
@@ -247,29 +253,43 @@ public class TestTargetBuilder
             .Select(parameterInfo => this.GetOrCreateService(parameterInfo.ParameterType, parentTypes))
             .ToArray();
 
-        var serviceInstance = constructor.Invoke(valuesForConstructor);
-
-        return serviceInstance;
+        return constructor.Invoke(valuesForConstructor);
     }
 
     private object GetOrCreateService(
         Type type,
         ICollection<string> parentTypes)
     {
-        if (TryGetDependencyFromCache(type, out var service))
+        if (this.TryGetDependencyFromCache(type, out var service))
         {
-            return service;
+            return service!;
         }
 
-        object serviceInstance;
+        var serviceInstance = this.TryGetOrCreateService(type, parentTypes);
+
+        if (serviceInstance == null)
+        {
+            var errorMessage = GetErrorMessage(type, parentTypes);
+            throw new TestTargetBuilderException(errorMessage, nameof(type));
+        }
+
+        this._services.Add(type, serviceInstance);
+
+        return serviceInstance;
+    }
+
+    private object TryGetOrCreateService(
+        Type type,
+        ICollection<string> parentTypes)
+    {
         try
         {
-            serviceInstance = GetBlueprintDependency(type, parentTypes) ??
-                              GetClassService(type, parentTypes) ??
-                              GetOptions(type, parentTypes) ??
-                              GetLoggerService(type) ??
-                              GetInterfaceService(type, parentTypes) ??
-                              throw new BlueprintDependencyException("Unable to get dependency");
+            return this.GetBlueprintDependency(type, parentTypes) ??
+                   this.GetClassService(type, parentTypes) ??
+                   this.GetOptions(type, parentTypes) ??
+                   this.GetLoggerService(type) ??
+                   this.GetInterfaceService(type, parentTypes) ??
+                   throw new BlueprintDependencyException("Unable to get dependency");
         }
         catch (TestTargetBuilderException)
         {
@@ -284,16 +304,6 @@ public class TestTargetBuilder
             var errorMessage = GetErrorMessage(type, parentTypes);
             throw new TestTargetBuilderException(errorMessage, nameof(type), exception);
         }
-
-        if (serviceInstance == null)
-        {
-            var errorMessage = GetErrorMessage(type, parentTypes);
-            throw new TestTargetBuilderException(errorMessage, nameof(type));
-        }
-
-        this._services.Add(type, serviceInstance);
-
-        return serviceInstance;
     }
 
     private bool TryGetDependencyFromCache(
@@ -356,6 +366,7 @@ public class TestTargetBuilder
         return this.GetOrCreateService(optionsWrapperType, parentTypes);
     }
 
+    [MaxMethodLength(11, Justification = "Method is concise and would be unnecessary to split out.")]
     private object? GetBlueprintDependency(
         Type dependencyType,
         ICollection<string> parentTypes)
@@ -375,7 +386,7 @@ public class TestTargetBuilder
                                                   $"Unable to load assembly {blueprintAssemblyAttribute.Name}. Ensure it is referenced in the project."))
             .ToList();
 
-        if (!blueprintAssemblies.Any())
+        if (blueprintAssemblies.Count == 0)
         {
             blueprintAssemblies = [entryPointAssembly];
         }
@@ -383,9 +394,9 @@ public class TestTargetBuilder
         var blueprintDependency = blueprintAssemblies
             .SelectMany(assembly => assembly.GetExportedTypes())
             .Where(
-                type => type.BaseType != null && type.BaseType.IsGenericType &&
+                type => type.BaseType?.IsGenericType == true &&
                         type.BaseType.GetGenericTypeDefinition() == typeof(BlueprintDependency<>))
-            .Where(type => type.BaseType.GetGenericArguments()[0] == dependencyType) // Match the generic type argument
+            .Where(type => type.BaseType?.GetGenericArguments()[0] == dependencyType) // Match the generic type argument
             .Select(Activator.CreateInstance)
             .FirstOrDefault();
 
@@ -397,41 +408,5 @@ public class TestTargetBuilder
         parentTypes.Add(dependencyType.Name);
 
         return BuildDependencyFromBlueprint(blueprintDependency);
-    }
-
-    private IBlueprintDependency<TDependency>? FindBlueprintDependency<TDependency>()
-        where TDependency : class
-    {
-        var dependencyType = typeof(TDependency);
-
-        if (this._blueprints.TryGetValue(dependencyType, out var existingBlueprintDependency))
-        {
-            return existingBlueprintDependency as IBlueprintDependency<TDependency>;
-        }
-
-        var entryPointAssembly = EntryPointAssembly.Load();
-
-        var blueprintAssemblies = entryPointAssembly.GetCustomAttributes<BlueprintAssemblyAttribute>()
-            .Select(
-                blueprintAssemblyAttribute => Assembly.Load(blueprintAssemblyAttribute.Name)
-                                              ?? throw new BlueprintDependencyException(
-                                                  $"Unable to load assembly {blueprintAssemblyAttribute.Name}. Ensure it is referenced in the project."))
-            .ToList();
-
-        if (!blueprintAssemblies.Any())
-        {
-            blueprintAssemblies = [entryPointAssembly];
-        }
-
-        var blueprintDependency = blueprintAssemblies
-            .SelectMany(assembly => assembly.GetExportedTypes())
-            .Where(
-                type => type.BaseType != null && type.BaseType.IsGenericType &&
-                        type.BaseType.GetGenericTypeDefinition() == typeof(BlueprintDependency<>))
-            .Where(type => type.BaseType?.GetGenericArguments()[0] == dependencyType) // Match the generic type argument
-            .Select(Activator.CreateInstance)
-            .FirstOrDefault();
-
-        return blueprintDependency as IBlueprintDependency<TDependency>;
     }
 }

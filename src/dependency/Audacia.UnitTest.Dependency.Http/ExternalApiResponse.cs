@@ -1,4 +1,4 @@
-﻿namespace Audacia.UnitTest.Dependency.Helpers.Http;
+﻿namespace Audacia.UnitTest.Dependency.Http;
 
 public class ExternalApiResponse
 {
@@ -10,7 +10,7 @@ public class ExternalApiResponse
     /// <summary>
     /// The message or reason phrase from the API response.
     /// </summary>
-    public string Message { get; set; }
+    public string? Message { get; set; }
 
     /// <summary>
     /// Indicates whether the API call was successful.

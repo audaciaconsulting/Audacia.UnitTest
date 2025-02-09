@@ -2,7 +2,7 @@
 
 namespace Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.People.Validate;
 
-public interface IValidatePersonCommandHandler : ICommandHandler<ValidatePersonCommand>
-{
-    
-}
+/// <summary>
+/// Interface for validating a person.
+/// </summary>
+public interface IValidatePersonCommandHandler : ICommandHandler<ValidatePersonCommand>;
