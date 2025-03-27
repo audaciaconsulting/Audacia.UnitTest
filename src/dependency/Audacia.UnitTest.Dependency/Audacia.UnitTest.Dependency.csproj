@@ -8,7 +8,7 @@
     </PropertyGroup>
 
     <PropertyGroup>
-        <Version>1.0.0</Version>
+        <Version>1.0.0-alpha</Version>
         <PackageId>Audacia.UnitTest.Dependency</PackageId>
         <Authors>Audacia</Authors>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>

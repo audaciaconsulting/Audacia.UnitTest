@@ -18,8 +18,10 @@ public class HttpClientFactoryBlueprint : BlueprintDependency<IHttpClientFactory
     public override IHttpClientFactory Build()
     {
         var httpClientFactory = Substitute.For<IHttpClientFactory>();
+#pragma warning disable IDISP001
         var httpClientFromBlueprint = new HttpClientBlueprint(_handler).Build();
         var httpClient = httpClientFactory.CreateClient();
+#pragma warning restore IDISP001
         httpClient.Returns(httpClientFromBlueprint);
 
         return httpClientFactory;

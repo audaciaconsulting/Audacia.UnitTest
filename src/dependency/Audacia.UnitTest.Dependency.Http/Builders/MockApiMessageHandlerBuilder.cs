@@ -9,7 +9,7 @@ namespace Audacia.UnitTest.Dependency.Http.Builders;
 /// </summary>
 public class MockApiMessageHandlerBuilder : IDisposable
 {
-    private readonly MockApiMessageHandler _mockApiMessageHandler = new("http://localhost:00000/oauth2/v2.0/token");
+    private readonly MockApiMessageHandler _mockApiMessageHandler = new(new Uri("http://localhost:00000/oauth2/v2.0/token"));
 
     private bool _isDisposed;
 

@@ -5,20 +5,21 @@ namespace Audacia.UnitTest.Dependency.Http;
 
 public class MockApiMessageHandler : MockHttpMessageHandler
 {
-    private readonly string _tokenUrl;
+    private readonly Uri _tokenUri;
 
     public MockedRequest MockedTokenRequest { get; private set; }
 
-    public MockApiMessageHandler(string tokenUrl) : base(BackendDefinitionBehavior.Always)
+    public MockApiMessageHandler(Uri tokenUri) : base(BackendDefinitionBehavior.Always)
     {
-        _tokenUrl = tokenUrl;
+        _tokenUri = tokenUri;
 
         MockedTokenRequest = SetupAuthorisation();
     }
 
     public MockedRequest ExpectTokenRequest()
     {
-        return this.Expect(_tokenUrl)
+        var tokenUrl = _tokenUri.ToString();
+        return this.Expect(tokenUrl)
             .Respond(
                 "application/json",
                 JsonSerializer.Serialize(
@@ -32,7 +33,8 @@ public class MockApiMessageHandler : MockHttpMessageHandler
 
     private MockedRequest SetupAuthorisation()
     {
-        return this.When(_tokenUrl)
+        var tokenUrl = _tokenUri.ToString();
+        return this.When(tokenUrl)
             .Respond(
                 "application/json",
                 JsonSerializer.Serialize(

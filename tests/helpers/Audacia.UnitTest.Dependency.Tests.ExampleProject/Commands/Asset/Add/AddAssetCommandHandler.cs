@@ -50,7 +50,8 @@ public class AddAssetCommandHandler(
         var json = JsonSerializer.Serialize(command);
         using var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-        using var response = await httpClient.PostAsync(new Uri(string.Empty), content, cancellationToken);
+        var url = new Uri("https://localhost:11111");
+        using var response = await httpClient.PostAsync(url, content, cancellationToken);
 
         if (!response.IsSuccessStatusCode)
         {

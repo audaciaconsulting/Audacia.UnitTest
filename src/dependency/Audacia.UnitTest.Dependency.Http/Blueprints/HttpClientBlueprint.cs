@@ -28,7 +28,10 @@ public class HttpClientBlueprint : BlueprintDependency<HttpClient>
             return givenHandler;
         }
 
-        var mockApiMessageHandler = new MockApiMessageHandlerBuilder().OkResponse();
+#pragma warning disable IDISP001
+        var mockApiMessageHandlerBuilder = new MockApiMessageHandlerBuilder();
+#pragma warning restore IDISP001
+        var mockApiMessageHandler = mockApiMessageHandlerBuilder.OkResponse();
 
         var httpClient = mockApiMessageHandler.ToHttpClient();
         httpClient.BaseAddress = new Uri("https://localhost:11111");
