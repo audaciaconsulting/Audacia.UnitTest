@@ -21,6 +21,17 @@ namespace Audacia.UnitTest.Dependency.Tests;
 public class TestTargetBuilderTests
 {
     [Fact]
+    public async Task Should_throw_exception_when_missing_no_implementation_can_be_found_for_dependency_of_interface_when_builder_target()
+    {
+        // Act
+        var target = () => new TestTargetBuilder()
+            .Build<AddAssetCommandHandler>();
+
+        // Assert
+        target.ShouldThrow<TestTargetBuilderException>();
+    }
+
+    [Fact]
     public async Task Should_be_able_to_create_target_with_http_client_factory_blueprint_dependency_with_okay_response()
     {
         // Arrange
