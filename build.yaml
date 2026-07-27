@@ -1,10 +1,10 @@
 name: $(Year:yy)$(DayOfYear).$(Rev:r)
 trigger:
-  - master
+  - main
 pr:
   branches:
     include:
-      - master
+      - main
 resources:
   repositories:
     - repository: templates
@@ -12,16 +12,27 @@ resources:
       endpoint: shared-github
       name: audaciaconsulting/Audacia.Build
 pool:
-  vmImage: windows-2022
+  vmImage: windows-latest
+variables:
+  - group: Code Signing
 
 stages:
 - stage: Stage_Build
   displayName: Build
-  jobs: 
-  - template: src/build/dotnet/jobs/nuget-package.job.yaml@templates
+  jobs:
+  - template: src/build/dotnet/jobs/signed-nuget-package.job.yaml@templates
     parameters:
+      trustedSigningEndpoint: $(TrustedSigningEndpoint)
+      trustedSigningAccount: $(TrustedSigningAccount)
+      trustedSigningCertificateProfile: $(TrustedSigningCertificateProfile)
+      serviceConnection: 'Audacia Code Signing'
+      directory: $(Build.SourcesDirectory)/src/dependency
+      fileToSignPattern: 'Audacia.UnitTest.Dependency*.dll'
       projects: 'src/**/*.csproj'
+      workingDirectory: 'src/dependency'
       excludePaths: '*.Test*.csproj'
+      packageSource: 'internalPublic'
+      dotNetVersion: '10.0.x'
 
 - stage: Stage_Release
   displayName: Release
