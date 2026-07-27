@@ -1,10 +1,7 @@
-﻿using System.Collections.Concurrent;
-using System.Reflection;
-using Audacia.CodeAnalysis.Analyzers.Helpers.MethodLength;
-using Audacia.UnitTest.Dependency.Attributes;
+using System.Collections.Concurrent;
 using Audacia.UnitTest.Dependency.Exceptions;
+using Audacia.UnitTest.Dependency.Extensions;
 using Audacia.UnitTest.Dependency.Helpers;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 
@@ -15,6 +12,11 @@ namespace Audacia.UnitTest.Dependency;
 /// </summary>
 public class TestTargetBuilder
 {
+    /// <summary>
+    /// The full name of Moq's mock type, matched by name so this package does not depend on Moq.
+    /// </summary>
+    private const string MoqMockTypeName = "Moq.Mock`1";
+
     private readonly string[] _excludeNamespaces;
 
     private readonly IDictionary<Type, object> _services = new Dictionary<Type, object>();
@@ -22,10 +24,10 @@ public class TestTargetBuilder
     private readonly IDictionary<Type, object> _blueprints = new Dictionary<Type, object>();
 
     /// <summary>
-    /// All types that can be resolved as a dependency, keyed by their consuming assembly
+    /// All types that can be resolved as a dependency, keyed by their consuming assembly, project scope and exclusions.
     /// Made a static field as part of #167094, as we were getting errors dynamically loading assemblies when this was a local variable.
     /// </summary>
-    private static readonly ConcurrentDictionary<string, IEnumerable<Type>> TypesForAssembly = new();
+    private static readonly ConcurrentDictionary<string, IReadOnlyCollection<Type>> TypesForAssembly = new();
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TestTargetBuilder"/> class.
@@ -47,18 +49,6 @@ public class TestTargetBuilder
         ArgumentNullException.ThrowIfNull(excludeNamespaces);
 
         _excludeNamespaces = [.. excludeNamespaces];
-    }
-
-    private TestTargetBuilder WithDependency(
-        object service,
-        Type type)
-    {
-        ArgumentNullException.ThrowIfNull(service);
-        ArgumentNullException.ThrowIfNull(type);
-
-        return !_services.TryAdd(type, service)
-            ? throw new TestTargetBuilderException("This service has already been added", nameof(service))
-            : this;
     }
 
     /// <summary>
@@ -112,6 +102,36 @@ public class TestTargetBuilder
     }
 
     /// <summary>
+    /// Injects <see cref="IOptionsSnapshot{TOptions}"/> into the builder with named options support. When the test
+    /// target or its dependencies call <c>Get(name)</c> they receive the corresponding named configuration.
+    /// </summary>
+    /// <param name="namedOptions">The configurations to provide, keyed by name.</param>
+    /// <param name="defaultOptions">
+    /// The configuration used for the <see cref="IOptions{TOptions}.Value"/> property, and for any name that was not
+    /// configured. When <see langword="null"/> the first entry in <paramref name="namedOptions"/> is used.
+    /// </param>
+    /// <typeparam name="TOptions">The type of the options class which is being provided to the test target.</typeparam>
+    /// <returns>The TestTargetBuilder.</returns>
+    /// <exception cref="ArgumentException">If <paramref name="namedOptions"/> is empty.</exception>
+    public TestTargetBuilder WithOptionsSnapshot<TOptions>(
+        IReadOnlyDictionary<string, TOptions> namedOptions,
+        TOptions? defaultOptions = null)
+        where TOptions : class
+    {
+        ArgumentNullException.ThrowIfNull(namedOptions);
+
+        if (namedOptions.Count == 0)
+        {
+            throw new ArgumentException("At least one named option must be provided", nameof(namedOptions));
+        }
+
+        var defaultValue = defaultOptions ?? namedOptions.First().Value;
+        var snapshot = new NamedOptionsSnapshot<TOptions>(namedOptions, defaultValue);
+
+        return With<IOptionsSnapshot<TOptions>>(snapshot);
+    }
+
+    /// <summary>
     /// Constructs an instance of the specified target type.
     /// </summary>
     /// <typeparam name="TTarget">Type to create instance of.</typeparam>
@@ -119,169 +139,91 @@ public class TestTargetBuilder
     public TTarget Build<TTarget>()
         where TTarget : class
     {
-        return (TTarget)GetOrCreateService(typeof(TTarget), []);
+        return (TTarget)Build(typeof(TTarget));
     }
 
-    private static string GetErrorMessage(
-        Type type,
-        ICollection<string> parentTypes)
+    /// <summary>
+    /// Constructs an instance of the specified target type, where the type is only known at runtime.
+    /// </summary>
+    /// <param name="targetType">Type to create instance of.</param>
+    /// <returns>An instance of <paramref name="targetType"/>.</returns>
+    public virtual object Build(Type targetType)
     {
-        var parentMessage = parentTypes.Count != 0
-            ? $" (constructing these types: {string.Join(" > ", parentTypes)})"
-            : string.Empty;
+        ArgumentNullException.ThrowIfNull(targetType);
 
-        return $"Could not construct a service for {type.Name}{parentMessage}";
+        return GetOrCreateService(targetType, new DependencyChain());
     }
 
-    private static IEnumerable<Type> GetAllTypes(
-        string projectNamespace,
-        params string[] excludes)
+    private TestTargetBuilder WithDependency(
+        object service,
+        Type type)
     {
-        var executingAssembly = EntryPointAssembly.Load();
+        ArgumentNullException.ThrowIfNull(service);
+        ArgumentNullException.ThrowIfNull(type);
 
-        // The exclusions form part of the key, as each set of exclusions resolves a different set of types.
-        var key = $"{executingAssembly.GetName().Name}|{string.Join(",", excludes)}";
-        if (!TypesForAssembly.TryGetValue(key, out var types))
+        GuardAgainstUnsupportedDependency(type);
+
+        return !_services.TryAdd(type, service)
+            ? throw new TestTargetBuilderException("This service has already been added", nameof(service))
+            : this;
+    }
+
+    /// <summary>
+    /// Rejects values that are a common mistake to pass, so the failure is explained rather than
+    /// surfacing later as an unresolvable dependency.
+    /// </summary>
+    /// <exception cref="TestTargetBuilderException">If a mock wrapper or a blueprint was provided.</exception>
+    private static void GuardAgainstUnsupportedDependency(Type type)
+    {
+        if (type.IsGenericType && type.GetGenericTypeDefinition().FullName == MoqMockTypeName)
         {
-            var referencedAssemblies = executingAssembly.GetReferencedAssemblies()
-                .Where(assemblyName => assemblyName.FullName.StartsWith(projectNamespace))
-                .Where(
-                    assemblyName => !excludes.Any(
-                        exclude => assemblyName.FullName.Contains(exclude, StringComparison.CurrentCultureIgnoreCase)))
-                .Select(Assembly.Load)
-                .ToList();
-            List<Assembly> allAssemblies = [executingAssembly, .. referencedAssemblies];
-            types = [.. allAssemblies
-                .SelectMany(a => a.GetExportedTypes())
-                .Where(t => t.IsClass)];
-            TypesForAssembly.TryAdd(key, types);
+            throw new TestTargetBuilderException(
+                "A mock was provided rather than the instance it mocks. Pass the mocked instance instead, for example by calling '.Object' on a Moq mock.",
+                type.Name);
         }
 
-        return types;
-    }
-
-    private static object? BuildDependencyFromBlueprint(object blueprintDependency)
-    {
-        var blueprintDependencyType = blueprintDependency.GetType();
-
-        var buildBlueprintDependencyMethod = blueprintDependencyType.GetMethod("Build");
-
-        return buildBlueprintDependencyMethod is null
-            ? throw new BlueprintDependencyException(
-                "Unable to find 'Build' to allow for building dependency blueprint.")
-            : buildBlueprintDependencyMethod.Invoke(blueprintDependency, null);
-    }
-
-    private object? GetInterfaceService(
-        Type typeToResolve,
-        ICollection<string> parentTypes)
-    {
-        if (!typeToResolve.IsInterface)
+        if (type.IsBlueprintDependency())
         {
-            return null;
+            throw new TestTargetBuilderException(
+                $"A blueprint was provided to '{nameof(With)}'. Use '{nameof(WithBlueprint)}' to configure a dependency from its blueprint.",
+                type.Name);
         }
-
-        var types = GetTypesFromAssembly(typeToResolve);
-
-        var firstImplementationType = types.FirstOrDefault(typeToResolve.IsAssignableFrom);
-        if (firstImplementationType == null)
-        {
-            return GetInterfaceFromGenericDefinition(typeToResolve, parentTypes, types);
-        }
-
-        parentTypes.Add(typeToResolve.Name);
-
-        return GetOrCreateService(firstImplementationType, parentTypes);
-    }
-
-    private object? GetInterfaceFromGenericDefinition(
-        Type typeToResolve,
-        ICollection<string> parentTypes,
-        List<Type> types)
-    {
-        var implementationTypes = types.Where(type => type is { IsAbstract: false, IsInterface: false }).Where(
-            type => type.GetInterfaces().Any(
-                interfaceType => interfaceType.IsGenericType && interfaceType.GetGenericTypeDefinition() ==
-                    typeToResolve.GetGenericTypeDefinition()));
-
-        var genericImplementationType = implementationTypes.FirstOrDefault(
-            it => it is { IsGenericType: true, ContainsGenericParameters: true });
-
-        if (genericImplementationType == null)
-        {
-            return null;
-        }
-
-        parentTypes.Add(typeToResolve.Name);
-
-        return GetOrCreateService(genericImplementationType, parentTypes);
-    }
-
-    private List<Type> GetTypesFromAssembly(Type typeToResolve)
-    {
-        var assembly = typeToResolve.Assembly;
-        var startingProjectNamespace = assembly.FullName!.Split('.').First();
-        return [.. GetAllTypes(startingProjectNamespace, _excludeNamespaces)];
-    }
-
-    private object? GetClassService(
-        Type type,
-        ICollection<string> parentTypes)
-    {
-        if (!type.IsClass)
-        {
-            return null;
-        }
-
-        var constructor = type.GetConstructors().FirstOrDefault()
-                          ?? throw new TestTargetBuilderException(
-                              $"Cannot find a Constructor for {type.Name}",
-                              nameof(type));
-        var constructorParameters = constructor.GetParameters();
-
-        parentTypes.Add(type.Name);
-
-        var valuesForConstructor = constructorParameters
-            .Select(parameterInfo => GetOrCreateService(parameterInfo.ParameterType, parentTypes))
-            .ToArray();
-
-        return constructor.Invoke(valuesForConstructor);
     }
 
     private object GetOrCreateService(
         Type type,
-        ICollection<string> parentTypes)
+        DependencyChain dependencyChain)
     {
-        if (TryGetDependencyFromCache(type, out var service))
+        if (_services.TryGetValue(type, out var service))
         {
-            return service!;
+            return service;
         }
 
-        var serviceInstance = TryGetOrCreateService(type, parentTypes);
+        var serviceInstance = ResolveService(type, dependencyChain);
 
-        if (serviceInstance == null)
+        // Do not cache generic types, as the same definition resolves differently depending on its parent.
+        if (!type.IsGenericType)
         {
-            var errorMessage = GetErrorMessage(type, parentTypes);
-            throw new TestTargetBuilderException(errorMessage, nameof(type));
+            _services.Add(type, serviceInstance);
         }
-
-        _services.Add(type, serviceInstance);
 
         return serviceInstance;
     }
 
-    private object TryGetOrCreateService(
+    private object ResolveService(
         Type type,
-        ICollection<string> parentTypes)
+        DependencyChain dependencyChain)
     {
         try
         {
-            return GetBlueprintDependency(type, parentTypes) ??
-                   GetClassService(type, parentTypes) ??
-                   GetOptions(type, parentTypes) ??
+            dependencyChain.Push(type);
+
+            return GetDependencyFromBlueprint(type) ??
+                   GetClassService(type, dependencyChain) ??
+                   GetOptions(type, dependencyChain) ??
                    GetLoggerService(type) ??
-                   GetInterfaceService(type, parentTypes) ??
-                   throw new BlueprintDependencyException("Unable to get dependency");
+                   GetInterfaceService(type, dependencyChain) ??
+                   throw new TestTargetBuilderException(GetErrorMessage(type, dependencyChain), type.Name);
         }
         catch (TestTargetBuilderException)
         {
@@ -293,97 +235,173 @@ public class TestTargetBuilder
         }
         catch (Exception exception)
         {
-            var errorMessage = GetErrorMessage(type, parentTypes);
-            throw new TestTargetBuilderException(errorMessage, nameof(type), exception);
+            throw new TestTargetBuilderException(GetErrorMessage(type, dependencyChain), type.Name, exception);
+        }
+        finally
+        {
+            dependencyChain.Pop();
         }
     }
 
-    private bool TryGetDependencyFromCache(
-        Type type,
-        out object? service)
+    /// <summary>
+    /// Creates an instance of the <paramref name="dependencyType"/> from its blueprint, if one exists.
+    /// </summary>
+    private object? GetDependencyFromBlueprint(Type dependencyType)
     {
-        return _services.TryGetValue(type, out service);
+        return GetBlueprintForDependency(dependencyType)?.BuildDependencyFromBlueprint();
     }
 
-    private object? GetLoggerService(Type type)
+    /// <summary>
+    /// Creates an instance of the <paramref name="type"/> if it is a class, resolving its constructor
+    /// parameters through the builder. Open generic classes are closed using the generic arguments of
+    /// their parent, for example <c>GetCommand{TContext,TEntity}</c> from <c>IGetCommand{HubContext,Job}</c>.
+    /// </summary>
+    /// <exception cref="TestTargetBuilderException">If the type has no constructor.</exception>
+    private object? GetClassService(
+        Type type,
+        DependencyChain dependencyChain)
     {
-        if (!type.IsGenericType || type.GetGenericTypeDefinition() != typeof(ILogger<>) ||
-            _services.ContainsKey(type))
+        if (!type.IsClass)
         {
             return null;
         }
 
-        var loggerArgType = type.GenericTypeArguments.FirstOrDefault();
-
-        using var nullLoggerFactory = new NullLoggerFactory();
-
-        if (loggerArgType == null)
+        var typeToConstruct = type;
+        if (type.IsGenericTypeDefinition)
         {
-            return nullLoggerFactory.CreateLogger(string.Empty);
+            var parentType = dependencyChain.GetParentType();
+            typeToConstruct = type.MakeGenericType(parentType.GetGenericArguments());
         }
 
-        var loggerType = typeof(NullLogger<>).MakeGenericType(loggerArgType);
+        var constructor = typeToConstruct.GetConstructors().FirstOrDefault()
+                          ?? throw new TestTargetBuilderException(
+                              $"Cannot find a Constructor for {type.Name}",
+                              type.Name);
+
+        var valuesForConstructor = constructor.GetParameters()
+            .Select(parameterInfo => GetOrCreateService(parameterInfo.ParameterType, dependencyChain.Clone()))
+            .ToArray();
+
+        return constructor.Invoke(valuesForConstructor);
+    }
+
+    /// <summary>
+    /// Creates an instance of the <paramref name="type"/> if it is an <see cref="IOptions{TOptions}"/>.
+    /// </summary>
+    private object? GetOptions(
+        Type type,
+        DependencyChain dependencyChain)
+    {
+        return type.IsOptions() ? GetOrCreateService(type.GetOptionsWrapper(), dependencyChain) : null;
+    }
+
+    /// <summary>
+    /// Creates an instance of the <paramref name="type"/> if it is an <see cref="Microsoft.Extensions.Logging.ILogger{TCategoryName}"/>.
+    /// </summary>
+    private static object? GetLoggerService(Type type)
+    {
+        if (!type.IsLogger())
+        {
+            return null;
+        }
+
+        var loggerType = typeof(NullLogger<>).MakeGenericType(type.GetGenericArguments().First());
+
         return Activator.CreateInstance(loggerType);
     }
 
-    private object? GetOptions(
+    /// <summary>
+    /// Creates an instance of the <paramref name="type"/> if it is an interface, by finding an implementation of it.
+    /// </summary>
+    private object? GetInterfaceService(
         Type type,
-        ICollection<string> parentTypes)
+        DependencyChain dependencyChain)
     {
-        if (!type.IsGenericType || type.GetGenericTypeDefinition() != typeof(IOptions<>))
+        if (!type.IsInterface)
         {
             return null;
         }
 
-        var typeForOptions = type.GetGenericArguments().First();
-        var optionsWrapperType = typeof(OptionsWrapper<>).MakeGenericType(typeForOptions);
+        var types = GetAllTypesInProjectScope(type);
 
-        parentTypes.Add(type.Name);
+        var implementationType = type.GetInterfaceImplementationType(types);
 
-        return GetOrCreateService(optionsWrapperType, parentTypes);
+        return implementationType is null ? null : GetOrCreateService(implementationType, dependencyChain);
     }
 
-    [MaxMethodLength(11, Justification = "Method is concise and would be unnecessary to split out.")]
-    private object? GetBlueprintDependency(
-        Type dependencyType,
-        ICollection<string> parentTypes)
+    /// <summary>
+    /// Finds the blueprint for the <paramref name="dependencyType"/>, if one exists. A generic blueprint is
+    /// closed using the generic arguments of the dependency.
+    /// </summary>
+    private object? GetBlueprintForDependency(Type dependencyType)
     {
-        // If the test target builder has been customised with the dependency type use that instead of the default blueprint.
+        // If the test target builder has been configured with the dependency type use that instead of the default blueprint.
         if (_blueprints.TryGetValue(dependencyType, out var existingBlueprintDependency))
         {
-            return BuildDependencyFromBlueprint(existingBlueprintDependency);
+            return existingBlueprintDependency;
         }
 
-        var entryPointAssembly = EntryPointAssembly.Load();
+        var blueprintAssemblies = EntryPointAssembly.Load().GetAllBlueprintAssemblies();
 
-        var blueprintAssemblies = entryPointAssembly.GetCustomAttributes<BlueprintAssemblyAttribute>()
-            .Select(
-                blueprintAssemblyAttribute => Assembly.Load(blueprintAssemblyAttribute.Name)
-                                              ?? throw new BlueprintDependencyException(
-                                                  $"Unable to load assembly {blueprintAssemblyAttribute.Name}. Ensure it is referenced in the project."))
-            .ToList();
-
-        if (blueprintAssemblies.Count == 0)
-        {
-            blueprintAssemblies = [entryPointAssembly];
-        }
-
-        var blueprintDependency = blueprintAssemblies
-            .SelectMany(assembly => assembly.GetExportedTypes())
-            .Where(
-                type => type.BaseType?.IsGenericType == true &&
-                        type.BaseType.GetGenericTypeDefinition() == typeof(BlueprintDependency<>))
-            .Where(type => type.BaseType?.GetGenericArguments()[0] == dependencyType) // Match the generic type argument
-            .Select(Activator.CreateInstance)
-            .FirstOrDefault();
-
-        if (blueprintDependency == null)
+        var blueprintDependencyType = blueprintAssemblies.GetBlueprintDependencyType(dependencyType);
+        if (blueprintDependencyType is null)
         {
             return null;
         }
 
-        parentTypes.Add(dependencyType.Name);
+        if (blueprintDependencyType.IsGenericTypeDefinition)
+        {
+            blueprintDependencyType = CloseGenericBlueprint(blueprintDependencyType, dependencyType);
+        }
 
-        return BuildDependencyFromBlueprint(blueprintDependency);
+        return Activator.CreateInstance(blueprintDependencyType);
+    }
+
+    /// <summary>
+    /// Closes a generic blueprint using the generic arguments of the dependency it builds.
+    /// </summary>
+    /// <exception cref="TestTargetBuilderException">If the blueprint is generic but the dependency is not.</exception>
+    private static Type CloseGenericBlueprint(
+        Type blueprintDependencyType,
+        Type dependencyType)
+    {
+        return !dependencyType.IsGenericType
+            ? throw new TestTargetBuilderException(
+                $"Blueprint type {blueprintDependencyType.Name} is generic but dependency type {dependencyType.Name} is not generic",
+                dependencyType.Name)
+            : blueprintDependencyType.MakeGenericType(dependencyType.GetGenericArguments());
+    }
+
+    /// <summary>
+    /// Gets all types from the assemblies in the same project scope as the <paramref name="typeToResolve"/>.
+    /// </summary>
+    private IReadOnlyCollection<Type> GetAllTypesInProjectScope(Type typeToResolve)
+    {
+        // e.g. get "Audacia" from "Audacia.Commands" so we only load "Audacia" assemblies.
+        var startingProjectNamespace = typeToResolve.GetProjectStartName();
+        var executingAssembly = EntryPointAssembly.Load();
+
+        // The project scope and exclusions form part of the key, as each combination resolves a different set of types.
+        var key = $"{executingAssembly.GetName().Name}|{startingProjectNamespace}|{string.Join(",", _excludeNamespaces)}";
+
+        return TypesForAssembly.GetOrAdd(
+            key,
+            _ => executingAssembly
+                .GetWithAllReferencedAssemblies(startingProjectNamespace, _excludeNamespaces)
+                .GetAllExportedClasses());
+    }
+
+    /// <summary>
+    /// Gets the error message for constructing the <paramref name="type"/> within the <paramref name="dependencyChain"/>.
+    /// </summary>
+    private static string GetErrorMessage(
+        Type type,
+        DependencyChain dependencyChain)
+    {
+        var parentMessage = dependencyChain.Count != 0
+            ? $" (constructing these types: {dependencyChain.ToChainString()})"
+            : string.Empty;
+
+        return $"Could not construct a service for {type.Name}{parentMessage}";
     }
 }

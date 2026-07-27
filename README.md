@@ -19,6 +19,8 @@ For more details on how to use `Audacia.UnitTest.Dependency` see the package [RE
 
 The purpose of `Audacia.UnitTest.Dependency.Http` is to provide blueprints for `HttpClient`, so a test target depending on `HttpClient` or `IHttpClientFactory` is given a fake instance with canned responses.
 
+For more details on how to use `Audacia.UnitTest.Dependency.Http` see the package [README](./src/dependency/Audacia.UnitTest.Dependency.Http/README.md).
+
 # Contributing
 
 We welcome contributions! Please feel free to check our [Contribution Guidelines](https://github.com/audaciaconsulting/.github/blob/main/CONTRIBUTING.md) for feature requests, issue reporting and guidelines.

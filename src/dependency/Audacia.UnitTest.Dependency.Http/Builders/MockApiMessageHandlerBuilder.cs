@@ -50,7 +50,7 @@ public class MockApiMessageHandlerBuilder : IDisposable
         var apiBadRequestResponse = new ExternalApiResponse()
         {
             StatusCode = 400,
-            IsSuccess = true,
+            IsSuccess = false,
             ReceivedAt = DateTime.Now,
             ErrorDetails = null,
             Message = message
@@ -74,7 +74,7 @@ public class MockApiMessageHandlerBuilder : IDisposable
         var apiUnauthorisedResponse = new ExternalApiResponse()
         {
             StatusCode = 401,
-            IsSuccess = true,
+            IsSuccess = false,
             ReceivedAt = DateTime.Now,
             ErrorDetails = null,
             Message = "Unauthorised"
@@ -98,7 +98,7 @@ public class MockApiMessageHandlerBuilder : IDisposable
         var apiForbiddenResponse = new ExternalApiResponse()
         {
             StatusCode = 403,
-            IsSuccess = true,
+            IsSuccess = false,
             ReceivedAt = DateTime.Now,
             ErrorDetails = null,
             Message = "Forbidden"
