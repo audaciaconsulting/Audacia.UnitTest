@@ -221,8 +221,7 @@ public class TestTargetBuilder
     {
         var assembly = typeToResolve.Assembly;
         var startingProjectNamespace = assembly.FullName!.Split('.').First();
-        var types = GetAllTypes(startingProjectNamespace, _excludeNamespaces).ToList();
-        return types;
+        return [.. GetAllTypes(startingProjectNamespace, _excludeNamespaces)];
     }
 
     private object? GetClassService(
@@ -303,9 +302,7 @@ public class TestTargetBuilder
         Type type,
         out object? service)
     {
-        var canGetService = _services.TryGetValue(type, out service);
-
-        return canGetService;
+        return _services.TryGetValue(type, out service);
     }
 
     private object? GetLoggerService(Type type)
@@ -326,9 +323,7 @@ public class TestTargetBuilder
         }
 
         var loggerType = typeof(NullLogger<>).MakeGenericType(loggerArgType);
-        var logger = Activator.CreateInstance(loggerType);
-
-        return logger;
+        return Activator.CreateInstance(loggerType);
     }
 
     private object? GetOptions(

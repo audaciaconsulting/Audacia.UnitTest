@@ -1,5 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 18
+VisualStudioVersion = 18.6.11822.322 stable
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Audacia.UnitTest.Dependency", "src\dependency\Audacia.UnitTest.Dependency\Audacia.UnitTest.Dependency.csproj", "{8455C499-2346-4DB8-A65A-9647E857C5FE}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{35389AA3-5A35-48E4-88A1-D212CF710DE5}"
@@ -16,6 +19,11 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Audacia.UnitTest.Dependency.Tests.ExampleProject", "tests\helpers\Audacia.UnitTest.Dependency.Tests.ExampleProject\Audacia.UnitTest.Dependency.Tests.ExampleProject.csproj", "{2B42445D-181E-475B-B82B-2CAB29791D27}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Audacia.UnitTest.Dependency.Http", "src\dependency\Audacia.UnitTest.Dependency.Http\Audacia.UnitTest.Dependency.Http.csproj", "{D317874D-B672-4343-9F46-64EA49790A7D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{29EE0357-9016-4AA5-B0F1-8AF8EAAE1AFD}"
+	ProjectSection(SolutionItems) = preProject
+		CHANGELOG.md = CHANGELOG.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +47,9 @@ Global
 		{D317874D-B672-4343-9F46-64EA49790A7D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D317874D-B672-4343-9F46-64EA49790A7D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D317874D-B672-4343-9F46-64EA49790A7D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{8455C499-2346-4DB8-A65A-9647E857C5FE} = {35389AA3-5A35-48E4-88A1-D212CF710DE5}
