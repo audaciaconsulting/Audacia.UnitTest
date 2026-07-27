@@ -1,10 +1,6 @@
-﻿using Audacia.CodeAnalysis.Analyzers.Helpers.MethodLength;
-
-namespace Audacia.UnitTest.Dependency;
-
-using System.Collections.Concurrent;
-using System.Linq.Expressions;
+﻿using System.Collections.Concurrent;
 using System.Reflection;
+using Audacia.CodeAnalysis.Analyzers.Helpers.MethodLength;
 using Audacia.UnitTest.Dependency.Attributes;
 using Audacia.UnitTest.Dependency.Exceptions;
 using Audacia.UnitTest.Dependency.Helpers;
@@ -12,12 +8,14 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 
+namespace Audacia.UnitTest.Dependency;
+
 /// <summary>
 /// A builder for constructing a target for ease of use dependency building.
 /// </summary>
 public class TestTargetBuilder
 {
-    private readonly IEnumerable<string> _excludeNamespaces = new List<string>();
+    private readonly string[] _excludeNamespaces;
 
     private readonly IDictionary<Type, object> _services = new Dictionary<Type, object>();
 
@@ -34,6 +32,7 @@ public class TestTargetBuilder
     /// </summary>
     public TestTargetBuilder()
     {
+        _excludeNamespaces = [];
     }
 
     /// <summary>
@@ -45,7 +44,9 @@ public class TestTargetBuilder
     /// </param>
     public TestTargetBuilder(IEnumerable<string> excludeNamespaces)
     {
-        this._excludeNamespaces = excludeNamespaces;
+        ArgumentNullException.ThrowIfNull(excludeNamespaces);
+
+        _excludeNamespaces = [.. excludeNamespaces];
     }
 
     private TestTargetBuilder WithDependency(
@@ -55,26 +56,23 @@ public class TestTargetBuilder
         ArgumentNullException.ThrowIfNull(service);
         ArgumentNullException.ThrowIfNull(type);
 
-        if (!this._services.TryAdd(type, service))
-        {
-            throw new TestTargetBuilderException("This service has already been added", nameof(service));
-        }
-
-        return this;
+        return !_services.TryAdd(type, service)
+            ? throw new TestTargetBuilderException("This service has already been added", nameof(service))
+            : this;
     }
 
     /// <summary>
     /// Configures the Test Target Builder with an instance of one of it's dependencies.
     /// </summary>
-    /// <param name="service"></param>
-    /// <typeparam name="TDependency"></typeparam>
-    /// <returns></returns>
+    /// <param name="service">An instance of a dependency.</param>
+    /// <typeparam name="TDependency">The type of the dependency.</typeparam>
+    /// <returns>The Test Target builder.</returns>
     public TestTargetBuilder With<TDependency>(TDependency service)
     {
         ArgumentNullException.ThrowIfNull(service);
 
         var dependencyType = typeof(TDependency);
-        return this.WithDependency(service, dependencyType);
+        return WithDependency(service, dependencyType);
     }
 
     /// <summary>
@@ -91,12 +89,9 @@ public class TestTargetBuilder
 
         var type = typeof(TDependency);
 
-        if (!this._blueprints.TryAdd(type, blueprint))
-        {
-            throw new TestTargetBuilderException("This blueprint has already been added", nameof(blueprint));
-        }
-
-        return this;
+        return !_blueprints.TryAdd(type, blueprint)
+            ? throw new TestTargetBuilderException("This blueprint has already been added", nameof(blueprint))
+            : this;
     }
 
     /// <summary>
@@ -113,7 +108,7 @@ public class TestTargetBuilder
         ArgumentNullException.ThrowIfNull(options);
 
         var optionsWrapper = new OptionsWrapper<TOptions>(options);
-        return this.With<IOptions<TOptions>>(optionsWrapper);
+        return With<IOptions<TOptions>>(optionsWrapper);
     }
 
     /// <summary>
@@ -124,7 +119,7 @@ public class TestTargetBuilder
     public TTarget Build<TTarget>()
         where TTarget : class
     {
-        return (TTarget)this.GetOrCreateService(typeof(TTarget), []);
+        return (TTarget)GetOrCreateService(typeof(TTarget), []);
     }
 
     private static string GetErrorMessage(
@@ -143,21 +138,22 @@ public class TestTargetBuilder
         params string[] excludes)
     {
         var executingAssembly = EntryPointAssembly.Load();
-        var key = executingAssembly.GetName().Name!;
+
+        // The exclusions form part of the key, as each set of exclusions resolves a different set of types.
+        var key = $"{executingAssembly.GetName().Name}|{string.Join(",", excludes)}";
         if (!TypesForAssembly.TryGetValue(key, out var types))
         {
             var referencedAssemblies = executingAssembly.GetReferencedAssemblies()
                 .Where(assemblyName => assemblyName.FullName.StartsWith(projectNamespace))
                 .Where(
-                    assemblyName => !excludes.Any() || excludes.Any(
-                        exclude => !assemblyName.FullName.Contains(exclude, StringComparison.CurrentCultureIgnoreCase)))
+                    assemblyName => !excludes.Any(
+                        exclude => assemblyName.FullName.Contains(exclude, StringComparison.CurrentCultureIgnoreCase)))
                 .Select(Assembly.Load)
                 .ToList();
             List<Assembly> allAssemblies = [executingAssembly, .. referencedAssemblies];
-            types = allAssemblies
+            types = [.. allAssemblies
                 .SelectMany(a => a.GetExportedTypes())
-                .Where(t => t.IsClass)
-                .ToList();
+                .Where(t => t.IsClass)];
             TypesForAssembly.TryAdd(key, types);
         }
 
@@ -170,13 +166,10 @@ public class TestTargetBuilder
 
         var buildBlueprintDependencyMethod = blueprintDependencyType.GetMethod("Build");
 
-        if (buildBlueprintDependencyMethod is null)
-        {
-            throw new BlueprintDependencyException(
-                "Unable to find 'Build' to allow for building dependency blueprint.");
-        }
-
-        return buildBlueprintDependencyMethod.Invoke(blueprintDependency, null);
+        return buildBlueprintDependencyMethod is null
+            ? throw new BlueprintDependencyException(
+                "Unable to find 'Build' to allow for building dependency blueprint.")
+            : buildBlueprintDependencyMethod.Invoke(blueprintDependency, null);
     }
 
     private object? GetInterfaceService(
@@ -198,7 +191,7 @@ public class TestTargetBuilder
 
         parentTypes.Add(typeToResolve.Name);
 
-        return this.GetOrCreateService(firstImplementationType, parentTypes);
+        return GetOrCreateService(firstImplementationType, parentTypes);
     }
 
     private object? GetInterfaceFromGenericDefinition(
@@ -221,14 +214,14 @@ public class TestTargetBuilder
 
         parentTypes.Add(typeToResolve.Name);
 
-        return this.GetOrCreateService(genericImplementationType, parentTypes);
+        return GetOrCreateService(genericImplementationType, parentTypes);
     }
 
-    private static List<Type> GetTypesFromAssembly(Type typeToResolve)
+    private List<Type> GetTypesFromAssembly(Type typeToResolve)
     {
         var assembly = typeToResolve.Assembly;
         var startingProjectNamespace = assembly.FullName!.Split('.').First();
-        var types = GetAllTypes(startingProjectNamespace).ToList();
+        var types = GetAllTypes(startingProjectNamespace, _excludeNamespaces).ToList();
         return types;
     }
 
@@ -250,7 +243,7 @@ public class TestTargetBuilder
         parentTypes.Add(type.Name);
 
         var valuesForConstructor = constructorParameters
-            .Select(parameterInfo => this.GetOrCreateService(parameterInfo.ParameterType, parentTypes))
+            .Select(parameterInfo => GetOrCreateService(parameterInfo.ParameterType, parentTypes))
             .ToArray();
 
         return constructor.Invoke(valuesForConstructor);
@@ -260,12 +253,12 @@ public class TestTargetBuilder
         Type type,
         ICollection<string> parentTypes)
     {
-        if (this.TryGetDependencyFromCache(type, out var service))
+        if (TryGetDependencyFromCache(type, out var service))
         {
             return service!;
         }
 
-        var serviceInstance = this.TryGetOrCreateService(type, parentTypes);
+        var serviceInstance = TryGetOrCreateService(type, parentTypes);
 
         if (serviceInstance == null)
         {
@@ -273,7 +266,7 @@ public class TestTargetBuilder
             throw new TestTargetBuilderException(errorMessage, nameof(type));
         }
 
-        this._services.Add(type, serviceInstance);
+        _services.Add(type, serviceInstance);
 
         return serviceInstance;
     }
@@ -284,11 +277,11 @@ public class TestTargetBuilder
     {
         try
         {
-            return this.GetBlueprintDependency(type, parentTypes) ??
-                   this.GetClassService(type, parentTypes) ??
-                   this.GetOptions(type, parentTypes) ??
-                   this.GetLoggerService(type) ??
-                   this.GetInterfaceService(type, parentTypes) ??
+            return GetBlueprintDependency(type, parentTypes) ??
+                   GetClassService(type, parentTypes) ??
+                   GetOptions(type, parentTypes) ??
+                   GetLoggerService(type) ??
+                   GetInterfaceService(type, parentTypes) ??
                    throw new BlueprintDependencyException("Unable to get dependency");
         }
         catch (TestTargetBuilderException)
@@ -310,7 +303,7 @@ public class TestTargetBuilder
         Type type,
         out object? service)
     {
-        var canGetService = this._services.TryGetValue(type, out service);
+        var canGetService = _services.TryGetValue(type, out service);
 
         return canGetService;
     }
@@ -318,7 +311,7 @@ public class TestTargetBuilder
     private object? GetLoggerService(Type type)
     {
         if (!type.IsGenericType || type.GetGenericTypeDefinition() != typeof(ILogger<>) ||
-            this._services.ContainsKey(type))
+            _services.ContainsKey(type))
         {
             return null;
         }
@@ -336,17 +329,6 @@ public class TestTargetBuilder
         var logger = Activator.CreateInstance(loggerType);
 
         return logger;
-
-        // var mockType = typeof(object).MakeGenericType(type);
-        // var mockConstructor = mockType.GetConstructors().First();
-        // var service = mockConstructor.Invoke(null);
-        //
-        // var mockedProperties = mockType.GetProperties();
-        // var objectProperty = Array.Find(
-        //     mockedProperties,
-        //     propertyInfo => propertyInfo.Name == "Object" && propertyInfo.PropertyType == type);
-        //
-        // return objectProperty?.GetValue(service);
     }
 
     private object? GetOptions(
@@ -363,7 +345,7 @@ public class TestTargetBuilder
 
         parentTypes.Add(type.Name);
 
-        return this.GetOrCreateService(optionsWrapperType, parentTypes);
+        return GetOrCreateService(optionsWrapperType, parentTypes);
     }
 
     [MaxMethodLength(11, Justification = "Method is concise and would be unnecessary to split out.")]
@@ -372,7 +354,7 @@ public class TestTargetBuilder
         ICollection<string> parentTypes)
     {
         // If the test target builder has been customised with the dependency type use that instead of the default blueprint.
-        if (this._blueprints.TryGetValue(dependencyType, out var existingBlueprintDependency))
+        if (_blueprints.TryGetValue(dependencyType, out var existingBlueprintDependency))
         {
             return BuildDependencyFromBlueprint(existingBlueprintDependency);
         }

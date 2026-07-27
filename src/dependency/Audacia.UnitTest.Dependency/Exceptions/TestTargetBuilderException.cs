@@ -49,7 +49,7 @@ public class TestTargetBuilderException : Exception
     public TestTargetBuilderException(
         string message,
         string service,
-        Exception innerException) : base(message)
+        Exception innerException) : base(message, innerException)
     {
         Service = service;
     }

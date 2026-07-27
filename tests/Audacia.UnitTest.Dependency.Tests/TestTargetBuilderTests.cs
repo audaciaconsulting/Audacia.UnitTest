@@ -1,8 +1,5 @@
-﻿using System.Net;
-using System.Text.Json;
-using Audacia.Commands;
+﻿using Audacia.Commands;
 using Audacia.UnitTest.Dependency.Exceptions;
-using Audacia.UnitTest.Dependency.Http;
 using Audacia.UnitTest.Dependency.Http.Blueprints;
 using Audacia.UnitTest.Dependency.Http.Builders;
 using Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.Asset.Add;
@@ -13,7 +10,6 @@ using Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.People.Add;
 using Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.People.Validate;
 using Audacia.UnitTest.Dependency.Tests.ExampleProject.Configuration;
 using NSubstitute;
-using RichardSzalay.MockHttp;
 using Shouldly;
 
 namespace Audacia.UnitTest.Dependency.Tests;
@@ -56,7 +52,12 @@ public class TestTargetBuilderTests
     {
         // Arrange
         var addAssetCommand = new AddAssetCommand("Computer");
-        var mockApiMessageHandler = new MockApiMessageHandlerBuilder().BadRequestResponse();
+        using var mockApiMessageHandlerBuilder = new MockApiMessageHandlerBuilder();
+
+        // The handler is owned and disposed by the builder above.
+#pragma warning disable IDISP001
+        var mockApiMessageHandler = mockApiMessageHandlerBuilder.BadRequestResponse();
+#pragma warning restore IDISP001
         var httpClientFactoryBlueprint = new HttpClientFactoryBlueprint(mockApiMessageHandler);
 
         // Act

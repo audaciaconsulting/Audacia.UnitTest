@@ -9,15 +9,28 @@ public class HttpClientBlueprint : BlueprintDependency<HttpClient>
 {
     private readonly MockApiMessageHandler? _mockApiMessageHandler;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="HttpClientBlueprint"/> class,
+    /// which responds to any request with a successful response.
+    /// </summary>
     public HttpClientBlueprint()
     {
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="HttpClientBlueprint"/> class,
+    /// using the given handler to determine the responses.
+    /// </summary>
+    /// <param name="mockApiMessageHandler">The handler to respond with, or <see langword="null"/> to respond with a successful response.</param>
     public HttpClientBlueprint(MockApiMessageHandler? mockApiMessageHandler)
     {
         _mockApiMessageHandler = mockApiMessageHandler;
     }
 
+    /// <summary>
+    /// Builds the fake <see cref="HttpClient"/>.
+    /// </summary>
+    /// <returns>An <see cref="HttpClient"/> backed by the configured handler.</returns>
     public override HttpClient Build()
     {
         if (_mockApiMessageHandler != null)

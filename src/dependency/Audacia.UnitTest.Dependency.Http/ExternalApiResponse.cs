@@ -1,34 +1,37 @@
-﻿namespace Audacia.UnitTest.Dependency.Http;
+namespace Audacia.UnitTest.Dependency.Http;
 
+/// <summary>
+/// A canned response body returned by a mocked external API.
+/// </summary>
 public class ExternalApiResponse
 {
     /// <summary>
-    /// The status code returned by the external API.
+    /// Gets or sets the status code returned by the external API.
     /// </summary>
     public int StatusCode { get; set; }
 
     /// <summary>
-    /// The message or reason phrase from the API response.
+    /// Gets or sets the message or reason phrase from the API response.
     /// </summary>
     public string? Message { get; set; }
 
     /// <summary>
-    /// Indicates whether the API call was successful.
+    /// Gets or sets a value indicating whether the API call was successful.
     /// </summary>
     public bool IsSuccess { get; set; }
 
     /// <summary>
-    /// The data returned by the API, if any.
+    /// Gets or sets the data returned by the API, if any.
     /// </summary>
     public object? Data { get; set; }
 
     /// <summary>
-    /// Any error details returned by the API.
+    /// Gets or sets any error details returned by the API.
     /// </summary>
     public string? ErrorDetails { get; set; }
 
     /// <summary>
-    /// The timestamp when the response was received.
+    /// Gets or sets the timestamp when the response was received.
     /// </summary>
     public DateTime ReceivedAt { get; set; } = DateTime.UtcNow;
 

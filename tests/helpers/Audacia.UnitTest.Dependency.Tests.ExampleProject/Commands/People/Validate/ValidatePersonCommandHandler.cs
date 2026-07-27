@@ -9,6 +9,8 @@ namespace Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.People.Valid
 /// <param name="logger"></param>
 public class ValidatePersonCommandHandler(ILogger<ValidatePersonCommandHandler> logger) : IValidatePersonCommandHandler
 {
+    private const int MaxPersonNameLength = 25;
+
     /// <summary>
     /// Validate a person that has being requested to be added or updated.
     /// </summary>
@@ -23,10 +25,11 @@ public class ValidatePersonCommandHandler(ILogger<ValidatePersonCommandHandler> 
 
         logger.LogInformation("Entry: Validating person with Name: {@ValidatePersonName}", command.Person.Name);
 
-        if (command.Person.Name.Length > 25)
+        if (command.Person.Name.Length > MaxPersonNameLength)
         {
             logger.LogWarning("Exit: Person name is too long");
-            return Task.FromResult(CommandResult.Failure("Person name cannot be longer than 25 characters."));
+            return Task.FromResult(
+                CommandResult.Failure($"Person name cannot be longer than {MaxPersonNameLength} characters."));
         }
 
         logger.LogInformation("Exit: Person is valid");

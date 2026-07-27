@@ -32,12 +32,9 @@ public class AddAssetCommandHandler(
         var validateAssetCommand = new ValidateAssetCommand(command);
         var validationResult = await validateAssetCommandHandler.HandleAsync(validateAssetCommand, cancellationToken);
 
-        if (!validationResult.IsSuccess)
-        {
-            return CommandResult.FromExistingResult<AddAssetCommandResultDto>(validationResult);
-        }
-
-        return await AddAssetAsync(command, validationResult, cancellationToken);
+        return !validationResult.IsSuccess
+            ? CommandResult.FromExistingResult<AddAssetCommandResultDto>(validationResult)
+            : await AddAssetAsync(command, validationResult, cancellationToken);
     }
 
     private async Task<CommandResult<AddAssetCommandResultDto>> AddAssetAsync(

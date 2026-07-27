@@ -13,6 +13,11 @@ public class MockApiMessageHandlerBuilder : IDisposable
 
     private bool _isDisposed;
 
+    /// <summary>
+    /// Configures the handler to return a '200 OK' response.
+    /// </summary>
+    /// <param name="when">The address the response is returned for.</param>
+    /// <returns>The configured handler.</returns>
     public MockApiMessageHandler OkResponse(string when = "https://localhost:11111")
     {
         var apiOkResponse = new ExternalApiResponse()
@@ -32,6 +37,12 @@ public class MockApiMessageHandlerBuilder : IDisposable
         return _mockApiMessageHandler;
     }
 
+    /// <summary>
+    /// Configures the handler to return a '400 Bad Request' response.
+    /// </summary>
+    /// <param name="when">The address the response is returned for.</param>
+    /// <param name="message">The message included in the response body.</param>
+    /// <returns>The configured handler.</returns>
     public MockApiMessageHandler BadRequestResponse(
         string when = "https://localhost:11111",
         string message = "Bad Request")
@@ -53,6 +64,11 @@ public class MockApiMessageHandlerBuilder : IDisposable
         return _mockApiMessageHandler;
     }
 
+    /// <summary>
+    /// Configures the handler to return a '401 Unauthorized' response.
+    /// </summary>
+    /// <param name="when">The address the response is returned for.</param>
+    /// <returns>The configured handler.</returns>
     public MockApiMessageHandler UnauthorisedResponse(string when = "https://localhost:11111")
     {
         var apiUnauthorisedResponse = new ExternalApiResponse()
@@ -72,6 +88,11 @@ public class MockApiMessageHandlerBuilder : IDisposable
         return _mockApiMessageHandler;
     }
 
+    /// <summary>
+    /// Configures the handler to return a '403 Forbidden' response.
+    /// </summary>
+    /// <param name="when">The address the response is returned for.</param>
+    /// <returns>The configured handler.</returns>
     public MockApiMessageHandler ForbiddenResponse(string when = "https://localhost:11111")
     {
         var apiForbiddenResponse = new ExternalApiResponse()
@@ -91,12 +112,19 @@ public class MockApiMessageHandlerBuilder : IDisposable
         return _mockApiMessageHandler;
     }
 
+    /// <summary>
+    /// Disposes the handler created by this builder.
+    /// </summary>
     public void Dispose()
     {
         Dispose(true);
         GC.SuppressFinalize(this);
     }
 
+    /// <summary>
+    /// Disposes the handler created by this builder.
+    /// </summary>
+    /// <param name="disposing">Whether managed resources should be disposed.</param>
     protected virtual void Dispose(bool disposing)
     {
         if (_isDisposed)

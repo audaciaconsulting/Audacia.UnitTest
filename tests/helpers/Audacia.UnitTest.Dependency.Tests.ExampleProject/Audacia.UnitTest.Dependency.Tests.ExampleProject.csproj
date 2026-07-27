@@ -9,10 +9,6 @@
         <RootNamespace>Audacia.UnitTest.Dependency.Tests.ExampleProject</RootNamespace>
     </PropertyGroup>
 
-    <PropertyGroup Condition="'$(Configuration)' != 'Debug'">
-        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    </PropertyGroup>
-
     <ItemGroup>
       <PackageReference Include="Audacia.CodeAnalysis" Version="1.12.0">
         <PrivateAssets>all</PrivateAssets>

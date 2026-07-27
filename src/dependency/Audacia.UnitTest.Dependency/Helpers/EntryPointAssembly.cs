@@ -1,6 +1,6 @@
-namespace Audacia.UnitTest.Dependency.Helpers;
-
 using System.Reflection;
+
+namespace Audacia.UnitTest.Dependency.Helpers;
 
 /// <summary>
 /// Helper methods to interact with the project containing the test currently being run.
