@@ -28,13 +28,13 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Audacia.CodeAnalysis" Version="2.0.0">
+      <PackageReference Include="Audacia.CodeAnalysis" Version="2.1.0">
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
       <PackageReference Include="Audacia.CodeAnalysis.Analyzers.Helpers" Version="2.0.0" />
-      <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.10" />
-      <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.10" />
+      <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.12" />
+      <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.12" />
     </ItemGroup>
 
 </Project>
