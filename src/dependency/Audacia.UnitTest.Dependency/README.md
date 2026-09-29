@@ -60,6 +60,19 @@ var target = new TestTargetBuilder()
 Pass the substitute itself, not a mock wrapper around it. Passing a Moq `Mock<T>`, or a blueprint that belongs in
 `WithBlueprint`, throws with an explanation rather than failing later.
 
+`With` isn't limited to substitutes — any manually constructed instance works, including a plain real object with
+specific state, which keeps a test using a genuine dependency instead of a fake one:
+
+```csharp
+var target = new TestTargetBuilder()
+    .With(new AppConfiguration { RetryCount = 3 })
+    .Build<AddPersonCommandHandler>();
+```
+
+The difference from `WithOptions` below is what the target receives: `With` registers the value as its own type
+(here, `AppConfiguration`), while `WithOptions` wraps it as `IOptions<AppConfiguration>`. Use whichever one matches
+what the target actually depends on.
+
 ### Configuration
 
 ```csharp
@@ -91,31 +104,35 @@ entry is used.
 ## Blueprints
 
 A blueprint describes how to build one dependency, so the same setup can be shared across tests instead of repeated.
-Derive from `BlueprintDependency<TDependency>`:
+Implement `IBlueprintDependency<TDependency>` directly, or derive from the abstract `BlueprintDependency<TDependency>`
+instead when the blueprint has no base class of its own:
 
 ```csharp
-public class PersonStoreBlueprint : BlueprintDependency<IPersonStore>
+public sealed class ReportFormatterBlueprint : IBlueprintDependency<IReportFormatter>
 {
-    public override IPersonStore Build()
+    public IReportFormatter Build()
     {
-        var store = Substitute.For<IPersonStore>();
-        store.Exists(Arg.Any<string>()).Returns(true);
-
-        return store;
+        return new ReportFormatter();
     }
 }
 ```
 
-Implementing `IBlueprintDependency<TDependency>` directly works too, which is useful when the blueprint already has
-a base class of its own.
+`ReportFormatter` is `internal`, so the builder cannot find it by scanning for exported implementations — without a
+blueprint, `IReportFormatter` could not be resolved at all. Blueprints are discovered automatically, so the one
+above is used for any `IReportFormatter` in the graph without being registered:
 
-Blueprints are discovered automatically, so the one above is used for any `IPersonStore` in the graph without being
-registered. To use a specific instance for a single test, pass it in:
+```csharp
+var target = new TestTargetBuilder().Build<ReportGenerator>();
+
+var report = target.Generate("value"); // "blueprint:value"
+```
+
+To use a specific instance for a single test instead of the discovered blueprint, pass it in:
 
 ```csharp
 var target = new TestTargetBuilder()
-    .WithBlueprint(new PersonStoreBlueprint())
-    .Build<AddPersonCommandHandler>();
+    .WithBlueprint(new ReportFormatterBlueprint())
+    .Build<ReportGenerator>();
 ```
 
 ### Where blueprints are looked for
