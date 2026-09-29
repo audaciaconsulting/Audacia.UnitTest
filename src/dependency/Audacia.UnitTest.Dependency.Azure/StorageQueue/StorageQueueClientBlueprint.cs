@@ -1,5 +1,7 @@
 ﻿using Audacia.UnitTest.Dependency.Customisations;
+using Azure;
 using Azure.Storage.Queues;
+using Azure.Storage.Queues.Models;
 using NSubstitute;
 
 namespace Audacia.UnitTest.Dependency.Azure.StorageQueue;
@@ -15,13 +17,12 @@ public sealed class StorageQueueClientBlueprint : CustomisedBlueprintDependency<
     /// </summary>
     public StorageQueueClientBlueprint()
     {
-        var defaultBehavior = new BlueprintCustomisation<QueueClient, Task>(
-            sender =>
-                sender.SendMessageAsync(
-                    Arg.Any<string>(),
-                    Arg.Any<CancellationToken>()),
-            Task.CompletedTask);
-        Customisations.Add(defaultBehavior);
+        var response = CreateSendResponse();
+
+        foreach (var sendCall in SendCalls())
+        {
+            Customisations.Add(new BlueprintCustomisation<QueueClient, Response<SendReceipt>>(sendCall, response));
+        }
     }
 
     /// <summary>
@@ -31,14 +32,49 @@ public sealed class StorageQueueClientBlueprint : CustomisedBlueprintDependency<
     public static StorageQueueClientBlueprint ThrowExceptionWhenSending()
     {
         var blueprint = new StorageQueueClientBlueprint();
-        var exceptionThrowingCustomisation = new BlueprintCustomisation<QueueClient, Task>(
-            sender =>
-                sender.SendMessageAsync(
-                    Arg.Any<string>(),
-                    Arg.Any<CancellationToken>()),
-            Task.FromException(new InvalidOperationException()));
-        blueprint.Customisations.Add(exceptionThrowingCustomisation);
+
+        foreach (var sendCall in SendCalls())
+        {
+            blueprint.Customisations.Add(
+                new BlueprintCustomisation<QueueClient, Response<SendReceipt>>(
+                    sendCall,
+                    new InvalidOperationException()));
+        }
 
         return blueprint;
+    }
+
+    /// <summary>
+    /// Every overload of <see cref="QueueClient"/> for sending a message, so behaviour applies however it is called.
+    /// </summary>
+    private static Func<QueueClient, Task<Response<SendReceipt>>>[] SendCalls()
+    {
+        return
+        [
+            client => client.SendMessageAsync(Arg.Any<string>()),
+            client => client.SendMessageAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()),
+            client => client.SendMessageAsync(
+                Arg.Any<string>(),
+                Arg.Any<TimeSpan?>(),
+                Arg.Any<TimeSpan?>(),
+                Arg.Any<CancellationToken>()),
+            client => client.SendMessageAsync(
+                Arg.Any<BinaryData>(),
+                Arg.Any<TimeSpan?>(),
+                Arg.Any<TimeSpan?>(),
+                Arg.Any<CancellationToken>())
+        ];
+    }
+
+    private static Response<SendReceipt> CreateSendResponse()
+    {
+        var receipt = QueuesModelFactory.SendReceipt(
+            "message-id",
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow,
+            "pop-receipt",
+            DateTimeOffset.UtcNow);
+
+        return Response.FromValue(receipt, Substitute.For<Response>());
     }
 }

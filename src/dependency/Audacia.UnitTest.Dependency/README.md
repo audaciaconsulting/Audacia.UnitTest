@@ -198,13 +198,13 @@ public static PersonStoreBlueprint WhereExistenceCheckFails()
 Implement `IBlueprintCustomisation<TDependency>` yourself for anything an extension of `BlueprintCustomisation` does not cover, such
 as configuring a method that returns nothing or setting up a property.
 
-After `Build` has run, `MockDependency` holds the substitute, so a test can assert on the calls it received with
-`Received()`. Build the blueprint yourself and pass the built instance to `With`, keeping hold of the blueprint:
+`MockDependency` holds the substitute the blueprint builds, so a test can assert on the calls it received with
+`Received()`. Keep hold of the blueprint and pass it to `WithBlueprint`:
 
 ```csharp
 var blueprint = new PersonStoreBlueprint();
 var target = new TestTargetBuilder()
-    .With(blueprint.Build())
+    .WithBlueprint(blueprint)
     .Build<AddPersonCommandHandler>();
 
 await target.HandleAsync(new AddPersonCommand("Joe Bloggs"));
@@ -213,8 +213,8 @@ await blueprint.MockDependency.Received(1)
     .ExistsAsync("Joe Bloggs", Arg.Any<CancellationToken>());
 ```
 
-`MockDependency` is only set when the blueprint has at least one customisation, and each call to `Build` creates a
-new substitute.
+`Build` applies the customisations to `MockDependency` and returns it, so it is the same instance every time.
+`MockDependency` can also be set, to customise a substitute you have already created.
 
 The Azure blueprints in [`Audacia.UnitTest.Dependency.Azure`](../Audacia.UnitTest.Dependency.Azure/README.md) are
 built this way.

@@ -13,7 +13,7 @@ public class CustomisedBlueprintDependency<TDependency> : BlueprintDependency<TD
     /// <summary>
     /// Gets or sets the mock instance of the dependency.
     /// </summary>
-    public TDependency MockDependency { get; protected set; } = null!;
+    public TDependency MockDependency { get; set; } = Substitute.For<TDependency>();
 
     /// <summary>
     /// Gets customisations to apply to mock instance of dependency.
@@ -23,13 +23,6 @@ public class CustomisedBlueprintDependency<TDependency> : BlueprintDependency<TD
     /// <inheritdoc />
     public override TDependency Build()
     {
-        if (!Customisations.Any())
-        {
-            return Substitute.For<TDependency>();
-        }
-
-        MockDependency = Substitute.For<TDependency>();
-
         foreach (var customisation in Customisations)
         {
             customisation.Apply(MockDependency);

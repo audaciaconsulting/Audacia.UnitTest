@@ -66,6 +66,11 @@ new ServiceBusClientBlueprint()
 new ServiceBusSenderBlueprint()
 ```
 
+The sender accepts `SendMessageAsync`, both `SendMessagesAsync` overloads (a collection or a batch) and
+`ScheduleMessageAsync`/`ScheduleMessagesAsync`, so the target can use whichever it needs. `CreateMessageBatchAsync`
+returns a new, empty batch on each call that messages can be added to and sent. The failure blueprints below throw
+from every send and schedule method, but still create batches, so the failure is seen when the batch is sent.
+
 ### Naming the client and entity
 
 When the code under test requests a specific client and queue/topic, use `Create`:

@@ -1,9 +1,12 @@
+using Audacia.UnitTest.Dependency.Customisations;
 using Audacia.UnitTest.Dependency.Exceptions;
 using Audacia.UnitTest.Dependency.Http.Blueprints;
 using Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.Asset.Add;
 using Audacia.UnitTest.Dependency.Tests.ExampleProject.Configuration;
-using Audacia.UnitTest.Dependency.Tests.ExampleProject.Repositories;
+using Audacia.UnitTest.Dependency.Tests.ExampleProject.Notifications;
 using Audacia.UnitTest.Dependency.Tests.ExampleProject.Reporting;
+using Audacia.UnitTest.Dependency.Tests.ExampleProject.Repositories;
+using NSubstitute;
 using Shouldly;
 
 namespace Audacia.UnitTest.Dependency.Tests;
@@ -25,6 +28,41 @@ public class TestTargetBuilderResolutionTests
 
         // Assert
         target.Generate("value").ShouldBe("blueprint:value");
+    }
+
+    [Fact]
+    public async Task Should_resolve_dependency_from_customised_blueprint_that_is_discovered_automatically()
+    {
+        // Arrange
+        // INotificationSender has no implementation, so it can only come from NotificationSenderBlueprint,
+        // which derives from CustomisedBlueprintDependency<T> and is never registered with the builder.
+
+        // Act
+        var target = new TestTargetBuilder().Build<NotificationService>();
+        var sent = await target.NotifyAsync("Hello");
+
+        // Assert
+        sent.ShouldBeTrue();
+        target.GetChannel().ShouldBe(NotificationSenderBlueprint.DefaultChannel);
+    }
+
+    [Fact]
+    public async Task Should_prefer_a_customised_blueprint_passed_to_the_builder_over_the_discovered_one()
+    {
+        // Arrange
+        var blueprint = new NotificationSenderBlueprint();
+        blueprint.Customisations.Add(new BlueprintCustomisation<INotificationSender, bool>(
+            sender => sender.SendAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()),
+            false));
+
+        // Act
+        var target = new TestTargetBuilder()
+            .WithBlueprint(blueprint)
+            .Build<NotificationService>();
+        var sent = await target.NotifyAsync("Hello");
+
+        // Assert
+        sent.ShouldBeFalse();
     }
 
     [Fact]
@@ -93,7 +131,7 @@ public class TestTargetBuilderResolutionTests
     public void Should_build_a_target_whose_type_is_only_known_at_runtime()
     {
         // Act
-        var target = new TestTargetBuilder().Build(typeof(ReportGenerator));
+        var target = new TestTargetBuilder().Build<ReportGenerator>();
 
         // Assert
         target.ShouldBeOfType<ReportGenerator>();

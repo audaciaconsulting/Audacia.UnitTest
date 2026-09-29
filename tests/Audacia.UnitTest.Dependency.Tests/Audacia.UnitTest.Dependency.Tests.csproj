@@ -33,6 +33,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\src\dependency\Audacia.UnitTest.Dependency.Azure\Audacia.UnitTest.Dependency.Azure.csproj" />
       <ProjectReference Include="..\..\src\dependency\Audacia.UnitTest.Dependency.Http\Audacia.UnitTest.Dependency.Http.csproj" />
       <ProjectReference Include="..\helpers\Audacia.UnitTest.Dependency.Tests.ExampleProject\Audacia.UnitTest.Dependency.Tests.ExampleProject.csproj" />
     </ItemGroup>
