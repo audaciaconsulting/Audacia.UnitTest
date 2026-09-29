@@ -1,0 +1,45 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<Version>1.0.1-alpha</Version>
+		<PackageId>Audacia.UnitTest.Dependency.Azure</PackageId>
+		<Authors>Audacia</Authors>
+		<PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+		<Description>A helper library for creating blueprints for Azure clients. Install this NuGet package to provide fake instances of Azure Service Bus, Storage Queue and Blob Storage dependencies.</Description>
+		<Copyright>Copyright © Audacia $([System.DateTime]::Now.Year)</Copyright>
+		<PackageTags>Audacia.UnitTest.Dependency.Azure, unittest, azure, servicebus, storagequeue, blobstorage</PackageTags>
+		<PackageIcon>package-icon.png</PackageIcon>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="..\..\..\package-icon.png" Pack="true" PackagePath="\" />
+		<None Include="README.md" Pack="true" PackagePath="\" />
+		<None Include="..\..\..\LICENSE.txt" Pack="true" PackagePath="\" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Audacia.Azure.BlobStorage" Version="2.0.0" />
+		<PackageReference Include="Audacia.CodeAnalysis" Version="2.1.0">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Azure.Messaging.ServiceBus" Version="7.21.0" />
+		<PackageReference Include="Azure.Storage.Queues" Version="12.27.1" />
+		<PackageReference Include="Microsoft.Extensions.Azure" Version="1.14.1" />
+		<PackageReference Include="NSubstitute" Version="6.2.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Audacia.UnitTest.Dependency\Audacia.UnitTest.Dependency.csproj" />
+	</ItemGroup>
+	
+</Project>

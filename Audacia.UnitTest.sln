@@ -22,11 +22,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Audacia.UnitTest.Dependency
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{29EE0357-9016-4AA5-B0F1-8AF8EAAE1AFD}"
 	ProjectSection(SolutionItems) = preProject
+		build.yaml = build.yaml
 		CHANGELOG.md = CHANGELOG.md
 		Directory.Build.props = Directory.Build.props
 		LICENSE.txt = LICENSE.txt
 		README.md = README.md
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Audacia.UnitTest.Dependency.Azure", "src\dependency\Audacia.UnitTest.Dependency.Azure\Audacia.UnitTest.Dependency.Azure.csproj", "{CDD7EFE3-06C2-43AA-88AD-D9FDC03192B8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -50,6 +53,10 @@ Global
 		{D317874D-B672-4343-9F46-64EA49790A7D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D317874D-B672-4343-9F46-64EA49790A7D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D317874D-B672-4343-9F46-64EA49790A7D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CDD7EFE3-06C2-43AA-88AD-D9FDC03192B8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CDD7EFE3-06C2-43AA-88AD-D9FDC03192B8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CDD7EFE3-06C2-43AA-88AD-D9FDC03192B8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CDD7EFE3-06C2-43AA-88AD-D9FDC03192B8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -60,6 +67,7 @@ Global
 		{1BF31E8A-706C-407F-B5BF-E127A014350A} = {12814FBC-1E3D-4D3E-B156-FD32905EA0F2}
 		{2B42445D-181E-475B-B82B-2CAB29791D27} = {5961AD99-15CB-4158-A83E-A54B2D6F9E90}
 		{D317874D-B672-4343-9F46-64EA49790A7D} = {35389AA3-5A35-48E4-88A1-D212CF710DE5}
+		{CDD7EFE3-06C2-43AA-88AD-D9FDC03192B8} = {35389AA3-5A35-48E4-88A1-D212CF710DE5}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {03F74A05-3E85-479B-8251-0F14A7CA2322}

@@ -8,7 +8,7 @@
     </PropertyGroup>
 
     <PropertyGroup>
-        <Version>1.0.0-alpha</Version>
+        <Version>1.0.1-alpha</Version>
         <PackageId>Audacia.UnitTest.Dependency</PackageId>
         <Authors>Audacia</Authors>
 		<PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
@@ -36,6 +36,7 @@
       <PackageReference Include="Audacia.CodeAnalysis.Analyzers.Helpers" Version="2.0.0" />
       <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.12" />
       <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.12" />
+      <PackageReference Include="NSubstitute" Version="6.2.0" />
     </ItemGroup>
 
 </Project>
