@@ -144,6 +144,81 @@ can be applied more than once:
 [assembly: BlueprintAssembly("MyProduct.Tests.Blueprints")]
 ```
 
+### Customised blueprints for substitutes
+
+When a dependency should be an NSubstitute substitute with some behaviour set up, you can derive from
+`CustomisedBlueprintDependency<TDependency>` instead of writing `Build` yourself. Add an
+`IBlueprintCustomisation<TDependency>` to its `Customisations` collection for each call you want to configure;
+`Build` creates the substitute and applies them in the order they were added:
+
+```csharp
+public sealed class PersonStoreBlueprint : CustomisedBlueprintDependency<IPersonStore>
+{
+    public PersonStoreBlueprint()
+    {
+        Customisations.Add(new BlueprintCustomisation<IPersonStore, bool>(
+            store => store.ExistsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()),
+            true));
+    }
+}
+```
+
+`BlueprintCustomisation<TDependency, TResult>` takes the call to configure, written as a lambda against the
+substitute using NSubstitute argument matchers, and what that call should do. It can either return a result or throw
+an exception, and works for both synchronous methods and those returning `Task<TResult>`:
+
+```csharp
+// Returns a value.
+new BlueprintCustomisation<IPersonStore, bool>(
+    store => store.ExistsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()),
+    true)
+
+// Throws. For an async method the exception surfaces from the returned task.
+new BlueprintCustomisation<IPersonStore, bool>(
+    store => store.ExistsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()),
+    new TimeoutException())
+```
+
+To reuse a blueprint with a variation, add to `Customisations` after construction, or expose a static factory that
+builds the default and adds one more. Where two customisations match the same call, the one added last wins, so put
+the general case first and the specific cases after it:
+
+```csharp
+public static PersonStoreBlueprint WhereExistenceCheckFails()
+{
+    var blueprint = new PersonStoreBlueprint();
+    blueprint.Customisations.Add(new BlueprintCustomisation<IPersonStore, bool>(
+        store => store.ExistsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()),
+        new TimeoutException()));
+
+    return blueprint;
+}
+```
+
+Implement `IBlueprintCustomisation<TDependency>` yourself for anything an extension of `BlueprintCustomisation` does not cover, such
+as configuring a method that returns nothing or setting up a property.
+
+After `Build` has run, `MockDependency` holds the substitute, so a test can assert on the calls it received with
+`Received()`. Build the blueprint yourself and pass the built instance to `With`, keeping hold of the blueprint:
+
+```csharp
+var blueprint = new PersonStoreBlueprint();
+var target = new TestTargetBuilder()
+    .With(blueprint.Build())
+    .Build<AddPersonCommandHandler>();
+
+await target.HandleAsync(new AddPersonCommand("Joe Bloggs"));
+
+await blueprint.MockDependency.Received(1)
+    .ExistsAsync("Joe Bloggs", Arg.Any<CancellationToken>());
+```
+
+`MockDependency` is only set when the blueprint has at least one customisation, and each call to `Build` creates a
+new substitute.
+
+The Azure blueprints in [`Audacia.UnitTest.Dependency.Azure`](../Audacia.UnitTest.Dependency.Azure/README.md) are
+built this way.
+
 ## Generic dependencies
 
 Open generic implementations are closed using the generic arguments of the interface being resolved. A target
@@ -195,4 +270,15 @@ blueprints for both along with a builder for canned API responses:
 var target = new TestTargetBuilder()
     .WithBlueprint(new HttpClientFactoryBlueprint())
     .Build<AddAssetCommandHandler>();
+```
+
+## Faking Azure
+
+To give a target fake Azure Service Bus, Storage Queue or Blob Storage dependencies, install
+[`Audacia.UnitTest.Dependency.Azure`](../Audacia.UnitTest.Dependency.Azure/README.md):
+
+```csharp
+var target = new TestTargetBuilder()
+    .WithBlueprint(new AzureClientFactoryServiceBusBlueprint())
+    .Build<OrderPlacedPublisher>();
 ```

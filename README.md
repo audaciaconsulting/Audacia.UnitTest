@@ -4,6 +4,7 @@ The `Audacia.UnitTest` repo contains multiple packages with each having a purpos
 
 - Audacia.UnitTest.Dependency
 - Audacia.UnitTest.Dependency.Http
+- Audacia.UnitTest.Dependency.Azure
 
 ## Audacia.UnitTest.Dependency
 
@@ -20,6 +21,12 @@ For more details on how to use `Audacia.UnitTest.Dependency` see the package [RE
 The purpose of `Audacia.UnitTest.Dependency.Http` is to provide blueprints for `HttpClient`, so a test target depending on `HttpClient` or `IHttpClientFactory` is given a fake instance with canned responses.
 
 For more details on how to use `Audacia.UnitTest.Dependency.Http` see the package [README](./src/dependency/Audacia.UnitTest.Dependency.Http/README.md).
+
+## Audacia.UnitTest.Dependency.Azure
+
+The purpose of `Audacia.UnitTest.Dependency.Azure` is to provide blueprints for the Azure services at the outer edge of an application, so a test target that sends to Service Bus or a Storage Queue, or adds and deletes blobs, is given a fake instance that accepts every call, or can be made to fail, without needing an Azure account.
+
+For more details on how to use `Audacia.UnitTest.Dependency.Azure` see the package [README](./src/dependency/Audacia.UnitTest.Dependency.Azure/README.md).
 
 # Contributing
 
