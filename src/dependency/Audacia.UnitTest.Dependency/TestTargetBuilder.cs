@@ -13,7 +13,7 @@ namespace Audacia.UnitTest.Dependency;
 public class TestTargetBuilder
 {
     /// <summary>
-    /// The full name of Moq's mock type, matched by name so this package does not depend on Moq.
+    /// The full name of Moq's mock type, matched by name so this package does not depend on Moq. This is used to guard against passing a mock wrapper rather than an instance.
     /// </summary>
     private const string MoqMockTypeName = "Moq.Mock`1";
 
@@ -178,7 +178,7 @@ public class TestTargetBuilder
         if (type.IsGenericType && type.GetGenericTypeDefinition().FullName == MoqMockTypeName)
         {
             throw new TestTargetBuilderException(
-                "A mock was provided rather than the instance it mocks. Pass the mocked instance instead, for example by calling '.Object' on a Moq mock.",
+                "A mock was provided rather than an instance. Use NSubstitute to create a mock instance instead.",
                 type.Name);
         }
 
