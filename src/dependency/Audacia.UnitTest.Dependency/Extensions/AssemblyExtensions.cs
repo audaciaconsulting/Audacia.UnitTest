@@ -70,7 +70,7 @@ internal static class AssemblyExtensions
         return
         [
             .. assembly.GetReferencedAssemblies()
-                .Where(assemblyName => assemblyName.FullName.StartsWith(projectNamespace, StringComparison.Ordinal))
+                .Where(assemblyName => assemblyName.FullName.StartsWith(projectNamespace, StringComparison.OrdinalIgnoreCase))
                 .Where(assemblyName => !assemblyName.IsExcluded(excludeNamespaces))
                 .Where(assemblyName => processedAssemblies.Add(assemblyName.FullName))
                 .Select(Assembly.Load)
@@ -150,6 +150,6 @@ internal static class AssemblyExtensions
     private static bool IsExcluded(this AssemblyName assemblyName, IReadOnlyCollection<string> excludeNamespaces)
     {
         return excludeNamespaces.Any(
-            exclude => assemblyName.FullName.Contains(exclude, StringComparison.CurrentCultureIgnoreCase));
+            exclude => assemblyName.FullName.Contains(exclude, StringComparison.OrdinalIgnoreCase));
     }
 }

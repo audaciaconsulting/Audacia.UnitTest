@@ -19,8 +19,16 @@ namespace Audacia.UnitTest.Dependency.DependencyInjection;
 /// Anything a registered service depends on that was not itself registered is built by the builder instead, using
 /// its usual rules (instances given to <c>With</c>, blueprints, real implementations and so on). The container is
 /// created the first time it is needed, so <c>With</c> and <c>WithBlueprint</c> can be called at any point before then.
-/// Services come from one shared scope, so scoped services behave as they do within a single request. That scope
-/// is not disposed, so avoid registering services that hold unmanaged resources.
+/// Services come from one shared scope, so scoped services behave as they do within a single request.
+/// </para>
+/// <para>
+/// <b>Disposal is deliberately not wired up.</b> A registration is created fresh for each <see cref="TestTargetBuilder"/>
+/// (typically one per test), and its container lives only for the lifetime of that single test run before both become
+/// eligible for garbage collection. Neither the builder nor this class implements <see cref="IDisposable"/>, so there is
+/// nowhere in the public API to call it from without forcing every test to wrap its builder in a <c>using</c> statement -
+/// a cost not worth paying for test-only, in-memory dependencies. Avoid registering services that hold genuine unmanaged
+/// resources (open files, sockets, native handles); everything else (in particular typical <c>DbContext</c>,
+/// <c>HttpClient</c> or logging registrations used in tests) is safe to leave for the garbage collector to reclaim.
 /// </para>
 /// </remarks>
 public abstract class ServiceRegistration : IDependencySource
@@ -134,9 +142,16 @@ public abstract class ServiceRegistration : IDependencySource
     }
 
     /// <summary>
-    /// The built container, with the scope every service is resolved from. Nothing disposes it while the test runs:
-    /// see the remarks on the class.
+    /// The built container, with the scope every service is resolved from.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Implements <see cref="IDisposable"/> so any resources it created are released correctly if a consumer ever
+    /// gets hold of an instance and disposes it directly, but nothing in this library calls <see cref="Dispose"/>
+    /// while a test runs: see the class-level remarks on <see cref="ServiceRegistration"/> for why that is
+    /// intentional rather than a leak to fix.
+    /// </para>
+    /// </remarks>
     private sealed class Container : IDisposable
     {
         private readonly IServiceProvider _rootProvider;

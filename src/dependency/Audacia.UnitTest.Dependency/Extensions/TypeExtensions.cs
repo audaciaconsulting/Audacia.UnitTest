@@ -29,7 +29,9 @@ internal static class TypeExtensions
     /// </returns>
     internal static Type? GetInterfaceImplementationType(this Type type, IReadOnlyCollection<Type> allTypes)
     {
-        var firstImplementationType = allTypes.FirstOrDefault(type.IsAssignableFrom);
+        var firstImplementationType = allTypes
+            .Where(candidate => !candidate.IsAbstract)
+            .FirstOrDefault(type.IsAssignableFrom);
         if (firstImplementationType != null)
         {
             return firstImplementationType;
