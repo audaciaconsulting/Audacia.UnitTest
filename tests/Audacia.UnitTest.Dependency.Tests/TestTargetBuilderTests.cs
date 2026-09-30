@@ -40,7 +40,7 @@ public class TestTargetBuilderTests
         var target = new TestTargetBuilder()
             .WithBlueprint(httpClientFactoryBlueprint)
             .Build<AddAssetCommandHandler>();
-        var result = await target.HandleAsync(addAssetCommand);
+        var result = await target.HandleAsync(addAssetCommand, TestContext.Current.CancellationToken);
 
         // Assert
         result.ShouldNotBeNull();
@@ -66,7 +66,7 @@ public class TestTargetBuilderTests
         var target = new TestTargetBuilder()
             .WithBlueprint(httpClientFactoryBlueprint)
             .Build<AddAssetCommandHandler>();
-        var result = await target.HandleAsync(addAssetCommand);
+        var result = await target.HandleAsync(addAssetCommand, TestContext.Current.CancellationToken);
 
         // Assert
         result.ShouldNotBeNull();
@@ -82,7 +82,7 @@ public class TestTargetBuilderTests
         const string validationError = "Custom validation error";
         var addAssetCommand = new AddAssetCommand("Computer");
         var validateAssetCommand = Substitute.For<IValidateAssetCommandHandler>();
-        validateAssetCommand.HandleAsync(new ValidateAssetCommand(addAssetCommand))
+        validateAssetCommand.HandleAsync(new ValidateAssetCommand(addAssetCommand), TestContext.Current.CancellationToken)
             .Returns(CommandResult.Failure(validationError));
         var httpClientFactoryBlueprint = new HttpClientFactoryBlueprint();
 
@@ -91,7 +91,7 @@ public class TestTargetBuilderTests
             .WithBlueprint(httpClientFactoryBlueprint)
             .With(validateAssetCommand)
             .Build<AddAssetCommandHandler>();
-        var result = await target.HandleAsync(addAssetCommand);
+        var result = await target.HandleAsync(addAssetCommand, TestContext.Current.CancellationToken);
 
         // Assert
         result.ShouldNotBeNull();
@@ -109,7 +109,7 @@ public class TestTargetBuilderTests
 
         // Act
         var target = new TestTargetBuilder().Build<ValidateAssetCommandHandler>();
-        var result = await target.HandleAsync(validateAssetCommand);
+        var result = await target.HandleAsync(validateAssetCommand, TestContext.Current.CancellationToken);
 
         // Assert
         result.ShouldNotBeNull();
@@ -124,14 +124,14 @@ public class TestTargetBuilderTests
         // Arrange
         var addPersonCommand = new AddPersonCommand("Joe Blog");
         var mockValidatePersonCommandHandler = Substitute.For<IValidatePersonCommandHandler>();
-        mockValidatePersonCommandHandler.HandleAsync(Arg.Any<ValidatePersonCommand>())
+        mockValidatePersonCommandHandler.HandleAsync(Arg.Any<ValidatePersonCommand>(), TestContext.Current.CancellationToken)
             .Returns(CommandResult.Failure("Validation failed"));
 
         // Act
         var target = new TestTargetBuilder()
             .With(mockValidatePersonCommandHandler)
             .Build<AddPersonCommandHandler>();
-        var result = await target.HandleAsync(addPersonCommand);
+        var result = await target.HandleAsync(addPersonCommand, TestContext.Current.CancellationToken);
 
         // Assert
         result.ShouldNotBeNull();
@@ -147,7 +147,7 @@ public class TestTargetBuilderTests
 
         // Act
         var target = new TestTargetBuilder().Build<AddPersonCommandHandler>();
-        var result = await target.HandleAsync(addPersonCommand);
+        var result = await target.HandleAsync(addPersonCommand, TestContext.Current.CancellationToken);
 
         // Assert
         result.ShouldNotBeNull();

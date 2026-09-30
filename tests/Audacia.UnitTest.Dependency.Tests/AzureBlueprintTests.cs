@@ -116,7 +116,7 @@ public class AzureBlueprintTests
         var sender = new ServiceBusSenderBlueprint().Build();
 
         // Act
-        using var batch = await sender.CreateMessageBatchAsync();
+        using var batch = await sender.CreateMessageBatchAsync(TestContext.Current.CancellationToken);
         var added = batch.TryAddMessage(new ServiceBusMessage("hello"));
         var send = () => sender.SendMessagesAsync(batch);
 
@@ -133,8 +133,8 @@ public class AzureBlueprintTests
         var sender = new ServiceBusSenderBlueprint().Build();
 
         // Act
-        using var first = await sender.CreateMessageBatchAsync();
-        using var second = await sender.CreateMessageBatchAsync(new CreateMessageBatchOptions());
+        using var first = await sender.CreateMessageBatchAsync(TestContext.Current.CancellationToken);
+        using var second = await sender.CreateMessageBatchAsync(new CreateMessageBatchOptions(), TestContext.Current.CancellationToken);
         first.TryAddMessage(new ServiceBusMessage("hello"));
 
         // Assert
@@ -149,7 +149,7 @@ public class AzureBlueprintTests
         var sender = ServiceBusSenderBlueprint.ThrowExceptionWhenSending().Build();
 
         // Act
-        using var batch = await sender.CreateMessageBatchAsync();
+        using var batch = await sender.CreateMessageBatchAsync(TestContext.Current.CancellationToken);
         var send = () => sender.SendMessagesAsync(batch);
 
         // Assert
@@ -163,8 +163,8 @@ public class AzureBlueprintTests
         var sender = new ServiceBusSenderBlueprint().Build();
 
         // Act
-        var single = await sender.ScheduleMessageAsync(new ServiceBusMessage("hello"), DateTimeOffset.UtcNow);
-        var multiple = await sender.ScheduleMessagesAsync([new ServiceBusMessage("hello")], DateTimeOffset.UtcNow);
+        var single = await sender.ScheduleMessageAsync(new ServiceBusMessage("hello"), DateTimeOffset.UtcNow, TestContext.Current.CancellationToken);
+        var multiple = await sender.ScheduleMessagesAsync([new ServiceBusMessage("hello")], DateTimeOffset.UtcNow, TestContext.Current.CancellationToken);
 
         // Assert
         single.ShouldBe(1);
@@ -184,7 +184,7 @@ public class AzureBlueprintTests
 
         // Assert
         namedSender.ShouldBeSameAs(failingSender);
-        await otherSender.SendMessageAsync(new ServiceBusMessage("hello"));
+        await otherSender.SendMessageAsync(new ServiceBusMessage("hello"), TestContext.Current.CancellationToken);
     }
 
     [Fact]
