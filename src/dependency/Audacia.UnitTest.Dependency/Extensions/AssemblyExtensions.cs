@@ -112,29 +112,37 @@ internal static class AssemblyExtensions
     }
 
     /// <summary>
+    /// Gets the public types visible outside of the given <paramref name="assemblies"/>.
+    /// </summary>
+    /// <param name="assemblies">The assemblies to get types from.</param>
+    /// <returns>The exported types.</returns>
+    internal static IReadOnlyCollection<Type> GetAllExportedTypes(this IEnumerable<Assembly> assemblies)
+    {
+        return [.. assemblies.SelectMany(assembly => assembly.GetExportedTypes())];
+    }
+
+    /// <summary>
     /// Gets the blueprint type that builds the given <paramref name="dependencyType"/>, if one exists.
     /// </summary>
-    /// <param name="assemblies">The assemblies to search.</param>
+    /// <param name="types">The types to search.</param>
     /// <param name="dependencyType">The dependency a blueprint is needed for.</param>
     /// <returns>The blueprint type, or <see langword="null"/> when none is found.</returns>
-    internal static Type? GetBlueprintDependencyType(this IEnumerable<Assembly> assemblies, Type dependencyType)
+    internal static Type? GetBlueprintDependencyType(this IEnumerable<Type> types, Type dependencyType)
     {
-        return assemblies
-            .SelectMany(assembly => assembly.GetExportedTypes())
+        return types
             .GetBlueprintDependencies()
             .FirstOrDefault(blueprintType => blueprintType.IsBlueprintFor(dependencyType));
     }
 
     /// <summary>
-    /// Gets the concrete classes in the given <paramref name="assemblies"/> that implement <see cref="IDependencySource"/>
+    /// Gets the concrete classes in the given <paramref name="types"/> that implement <see cref="IDependencySource"/>
     /// and can be created without arguments.
     /// </summary>
-    /// <param name="assemblies">The assemblies to search.</param>
+    /// <param name="types">The types to search.</param>
     /// <returns>The dependency source types.</returns>
-    internal static IEnumerable<Type> GetDependencySourceTypes(this IEnumerable<Assembly> assemblies)
+    internal static IEnumerable<Type> GetDependencySourceTypes(this IEnumerable<Type> types)
     {
-        return assemblies
-            .SelectMany(assembly => assembly.GetExportedTypes())
+        return types
             .Where(type => type is { IsClass: true, IsAbstract: false } && typeof(IDependencySource).IsAssignableFrom(type))
             .Where(type => type.GetConstructor(Type.EmptyTypes) is not null);
     }

@@ -19,7 +19,7 @@ public sealed class StorageQueueServiceClientBlueprint : CustomisedBlueprintDepe
         var defaultStorageQueueClient = new StorageQueueClientBlueprint().Build();
 
         var defaultStorageQueueClientCustomisation = new BlueprintCustomisation<QueueServiceClient, QueueClient>(
-            sender => sender.GetQueueClient(Arg.Any<string>()),
+            serviceClient => serviceClient.GetQueueClient(Arg.Any<string>()),
             defaultStorageQueueClient);
 
         Customisations.Add(defaultStorageQueueClientCustomisation);

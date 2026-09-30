@@ -12,6 +12,8 @@ namespace Audacia.UnitTest.Dependency.Azure.StorageQueue;
 /// </summary>
 public sealed class StorageQueueClientBlueprint : CustomisedBlueprintDependency<QueueClient>
 {
+    private const int ServiceUnavailableStatus = 503;
+
     /// <summary>
     /// Creates a default <see cref="StorageQueueClientBlueprint"/> where any message sent will be accepted.
     /// </summary>
@@ -28,7 +30,7 @@ public sealed class StorageQueueClientBlueprint : CustomisedBlueprintDependency<
     /// <summary>
     /// Creates a <see cref="StorageQueueClientBlueprint"/> where any message sent will throw an exception.
     /// </summary>
-    /// <returns>Blueprint configured to throw an exception when sending a message.</returns>
+    /// <returns>Blueprint configured to throw a <see cref="RequestFailedException"/> when sending a message.</returns>
     public static StorageQueueClientBlueprint ThrowExceptionWhenSending()
     {
         var blueprint = new StorageQueueClientBlueprint();
@@ -38,7 +40,7 @@ public sealed class StorageQueueClientBlueprint : CustomisedBlueprintDependency<
             blueprint.Customisations.Add(
                 new BlueprintCustomisation<QueueClient, Response<SendReceipt>>(
                     sendCall,
-                    new InvalidOperationException()));
+                    CreateFailure()));
         }
 
         return blueprint;
@@ -64,6 +66,11 @@ public sealed class StorageQueueClientBlueprint : CustomisedBlueprintDependency<
                 Arg.Any<TimeSpan?>(),
                 Arg.Any<CancellationToken>())
         ];
+    }
+
+    private static RequestFailedException CreateFailure()
+    {
+        return new RequestFailedException(ServiceUnavailableStatus, "The storage queue is unavailable.");
     }
 
     private static Response<SendReceipt> CreateSendResponse()

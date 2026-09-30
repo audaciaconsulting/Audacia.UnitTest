@@ -6,6 +6,9 @@ class that sends messages or stores blobs can be tested without an Azure account
 
 Built on [NSubstitute](https://nsubstitute.github.io/).
 
+The Blob Storage blueprints fake services from `Audacia.Azure.BlobStorage`, so this package references it, and its
+dependencies come with the package even if you only use Service Bus or Storage Queues.
+
 ## Installation
 
 ```
@@ -119,7 +122,7 @@ new AzureClientFactoryStorageQueueBlueprint()
 // A named client and queue: messages are accepted.
 AzureClientFactoryStorageQueueBlueprint.Create("notifications", "email-queue")
 
-// A named client and queue: sending throws an InvalidOperationException.
+// A named client and queue: sending throws a RequestFailedException.
 AzureClientFactoryStorageQueueBlueprint.CreateWithFailure("notifications", "email-queue")
 
 // Your own QueueServiceClient for a client name.
@@ -133,13 +136,21 @@ queue client that fails.
 ## Blob Storage
 
 These blueprints fake the `Audacia.Azure.BlobStorage` services. Every `ExecuteAsync` call completes and returns
-`true`:
+`true`. The add blueprint covers every way of adding a blob (bytes, base 64, a file or a stream):
 
 ```csharp
 var target = new TestTargetBuilder()
     .WithBlueprint(new AddAzureBlobStorageServiceBlueprint())
     .WithBlueprint(new DeleteAzureBlobStorageServiceBlueprint())
     .Build<DocumentService>();
+```
+
+To make adding or deleting fail, use the failure blueprints, which throw an `Azure.RequestFailedException`, as the Storage
+Queue ones do:
+
+```csharp
+AddAzureBlobStorageServiceBlueprint.ThrowExceptionWhenAdding()
+DeleteAzureBlobStorageServiceBlueprint.ThrowExceptionWhenDeleting()
 ```
 
 ## Asserting on what was sent

@@ -116,7 +116,15 @@ from a registration, with the concrete type used for each. See
 - Registered services come from a single shared scope for each builder, so scoped services behave as they would within one
   request.
 - That scope is not disposed, so avoid registering services that hold unmanaged resources.
-- Open generic registrations (such as a pipeline behavior) are used by the container but cannot be requested from the
-  builder directly.
+- Open generic registrations (such as a pipeline behavior) are used by the container. Their own constructor dependencies
+  are not inspected, and when a registered service needs a closed form of one (for example `IBehavior<Order>`), the builder
+  supplies it by scanning rather than the container, so register or supply anything such a type depends on with `With` or
+  `WithBlueprint`.
+- The builder is only asked for the dependencies in the constructor the container uses: the public constructor with the
+  most parameters. Services registered with a factory or an instance (for example `AddDbContext`) are not inspected, so
+  what they need must be registered too.
+- If a registered service needs a type that the builder constructs, and that type in turn needs the registered service, the
+  cycle is reported with a `TestTargetBuilderException` naming the type. Register the type, or give it to the builder with
+  `With` or `WithBlueprint`, to break the cycle.
 - If more than one registration can supply a type, the first wins: those added with `WithServices`, in the order added,
   then those found automatically.

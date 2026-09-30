@@ -37,7 +37,7 @@ public sealed class AzureClientFactoryStorageQueueBlueprint : AzureClientFactory
     /// </summary>
     /// <param name="clientName">The name of the client.</param>
     /// <param name="queueName">The name of the queue.</param>
-    /// <returns>Blueprint for creating a service bus client.</returns>
+    /// <returns>Blueprint for creating a storage queue service client.</returns>
     public static AzureClientFactoryStorageQueueBlueprint Create(
         string clientName,
         string queueName)
@@ -56,15 +56,15 @@ public sealed class AzureClientFactoryStorageQueueBlueprint : AzureClientFactory
     /// This queue client will throw an exception for any message sent.
     /// </summary>
     /// <param name="clientName">The name of the client.</param>
-    /// <param name="queueName">The name of the queue/topic.</param>
-    /// <returns>Blueprint for creating a service bus client.</returns>
+    /// <param name="queueName">The name of the queue.</param>
+    /// <returns>Blueprint for creating a storage queue service client.</returns>
     public static AzureClientFactoryStorageQueueBlueprint CreateWithFailure(
         string clientName,
         string queueName)
     {
-        var sender = StorageQueueClientBlueprint.ThrowExceptionWhenSending()
+        var queueClient = StorageQueueClientBlueprint.ThrowExceptionWhenSending()
             .Build();
-        var client = StorageQueueServiceClientBlueprint.WithNamedQueue(queueName, sender)
+        var client = StorageQueueServiceClientBlueprint.WithNamedQueue(queueName, queueClient)
             .Build();
 
         return new AzureClientFactoryStorageQueueBlueprint(clientName, client);

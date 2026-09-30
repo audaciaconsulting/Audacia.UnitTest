@@ -32,7 +32,8 @@ For each type in the graph the builder works down this list and takes the first 
 2. **A blueprint** for the type — one registered with `WithBlueprint`, or one discovered automatically.
 3. **A dependency source** — such as a registration of the project's own services, added with `WithDependencySource` or
    discovered automatically. See [Services that need a container](#services-that-need-a-container).
-4. **A class** — constructed via its first constructor, resolving each parameter the same way.
+4. **A class** — constructed by the builder via its first public constructor, resolving each parameter the same way (a service
+   registered with a dependency source is built by that source's container instead, which uses its own rules.)
 5. **`IOptions<T>`** — wrapped in an `OptionsWrapper<T>`.
 6. **`ILogger<T>`** — supplied as a `NullLogger<T>`.
 7. **An interface** — resolved to an implementation found in the assemblies in scope.

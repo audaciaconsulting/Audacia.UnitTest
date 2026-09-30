@@ -99,6 +99,28 @@ public sealed class TestTargetBuilderServicesTests
     }
 
     [Fact]
+    public void A_circular_dependency_between_a_registered_service_and_the_builder_is_reported_rather_than_hanging()
+    {
+        var builder = new TestTargetBuilder()
+            .WithServices(services => services.AddScoped<IRingStart, RingStart>());
+
+        var exception = Should.Throw<TestTargetBuilderException>(builder.Build<IRingStart>);
+
+        exception.Message.ShouldContain("circular");
+    }
+
+    [Fact]
+    public void A_dependency_of_the_constructor_the_container_uses_comes_from_the_builder_when_a_class_has_several()
+    {
+        var greeter = new TestTargetBuilder()
+            .WithServices(services => services.AddScoped<IGreeter, MultipleConstructorGreeter>())
+            .With<IName>(new FixedName("Joe"))
+            .Build<IGreeter>();
+
+        greeter.Greet().ShouldBe("Hello Joe");
+    }
+
+    [Fact]
     public void A_registration_is_required()
     {
         var builder = new TestTargetBuilder();
@@ -118,6 +140,39 @@ public sealed class TestTargetBuilderServicesTests
     public interface IGreeter
     {
         string Greet();
+    }
+
+    public interface IRingStart;
+
+    public interface IRingEnd;
+
+    public sealed class RingStart(IRingEnd end) : IRingStart
+    {
+        public IRingEnd End => end;
+    }
+
+    public sealed class RingEnd(IRingStart start) : IRingEnd
+    {
+        public IRingStart Start => start;
+    }
+
+    internal sealed class MultipleConstructorGreeter : IGreeter
+    {
+        private readonly IName? _name;
+
+        public MultipleConstructorGreeter()
+        {
+        }
+
+        public MultipleConstructorGreeter(IName name)
+        {
+            _name = name;
+        }
+
+        public string Greet()
+        {
+            return $"Hello {_name?.Value}";
+        }
     }
 
     internal sealed class NeedsMissingPart(IMissingPart part) : INeedsMissingPart

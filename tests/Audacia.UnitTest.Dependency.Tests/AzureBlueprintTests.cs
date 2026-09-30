@@ -1,4 +1,5 @@
 #pragma warning disable IDISP013 // Batches are awaited from the blueprint under test and disposed by their using.
+using Audacia.Azure.BlobStorage.AddBlob;
 using Audacia.Azure.BlobStorage.AddBlob.Commands;
 using Audacia.Azure.BlobStorage.DeleteBlob.Commands;
 using Audacia.UnitTest.Dependency.Azure.ServiceBus;
@@ -258,7 +259,7 @@ public class AzureBlueprintTests
         // Act & Assert
         foreach (var send in SendUsingEveryOverload(queue))
         {
-            await send.ShouldThrowAsync<InvalidOperationException>();
+            await send.ShouldThrowAsync<RequestFailedException>();
         }
     }
 
@@ -272,7 +273,7 @@ public class AzureBlueprintTests
         var send = () => queue.SendMessageAsync("hello", CancellationToken.None);
 
         // Assert
-        await send.ShouldThrowAsync<InvalidOperationException>();
+        await send.ShouldThrowAsync<RequestFailedException>();
     }
 
     [Fact]
@@ -346,7 +347,7 @@ public class AzureBlueprintTests
         // Act & Assert
         foreach (var send in SendUsingEveryOverload(queue))
         {
-            await send.ShouldThrowAsync<InvalidOperationException>();
+            await send.ShouldThrowAsync<RequestFailedException>();
         }
     }
 
@@ -374,6 +375,58 @@ public class AzureBlueprintTests
 
         // Assert
         deleted.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task Should_report_a_blob_as_added_using_any_add_overload()
+    {
+        // Arrange
+        var service = new AddAzureBlobStorageServiceBlueprint().Build();
+
+        await using var stream = new MemoryStream([1, 2, 3]);
+
+        // Act & Assert
+        foreach (var add in AddUsingEveryOverload(service, stream))
+        {
+            (await add()).ShouldBeTrue();
+        }
+    }
+
+    [Fact]
+    public async Task Should_throw_when_a_blob_is_added_using_any_add_overload()
+    {
+        // Arrange
+        var service = AddAzureBlobStorageServiceBlueprint.ThrowExceptionWhenAdding().Build();
+
+        await using var stream = new MemoryStream([1, 2, 3]);
+
+        // Act & Assert
+        foreach (var add in AddUsingEveryOverload(service, stream))
+        {
+            await add().ShouldThrowAsync<RequestFailedException>();
+        }
+    }
+
+    [Fact]
+    public async Task Should_throw_when_a_blob_is_deleted()
+    {
+        // Arrange
+        var service = DeleteAzureBlobStorageServiceBlueprint.ThrowExceptionWhenDeleting().Build();
+
+        // Act & Assert
+        await service.ExecuteAsync(new DeleteAzureBlobStorageCommand("documents", "report.pdf"), CancellationToken.None)
+            .ShouldThrowAsync<RequestFailedException>();
+    }
+
+    private static Func<Task<bool>>[] AddUsingEveryOverload(IAddAzureBlobStorageService service, Stream stream)
+    {
+        return
+        [
+            () => service.ExecuteAsync(new AddBlobBytesCommand("documents", "report.pdf", [1, 2, 3]), CancellationToken.None),
+            () => service.ExecuteAsync(new AddBlobBaseSixtyFourCommand("documents", "report.pdf", "AQID"), CancellationToken.None),
+            () => service.ExecuteAsync(new AddBlobFileCommand("documents", "report.pdf", "report.pdf"), CancellationToken.None),
+            () => service.ExecuteAsync(new AddBlobStreamCommand("documents", "report.pdf", stream), CancellationToken.None)
+        ];
     }
 
     private static Func<Task>[] SendUsingEveryMethod(

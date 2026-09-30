@@ -1,41 +1,38 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <TargetFramework>net10.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
-        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+	</PropertyGroup>
 
-    <PropertyGroup>
-        <Version>1.0.1</Version>
-        <PackageId>Audacia.UnitTest.Dependency.DependencyInjection</PackageId>
-        <Authors>Audacia</Authors>
-        <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
-        <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-        <Description>A helper library for combining a project's own service registration extensions (for example AddApplication) with the Audacia.UnitTest.Dependency TestTargetBuilder. Registered services come from the container, and anything they depend on that is not registered is built by the TestTargetBuilder.</Description>
-        <Copyright>Copyright © Audacia $([System.DateTime]::Now.Year)</Copyright>
-        <PackageTags>Audacia.UnitTest.Dependency.DependencyInjection, unittest</PackageTags>
-        <PackageIcon>package-icon.png</PackageIcon>
-        <PackageReadmeFile>README.md</PackageReadmeFile>
-    </PropertyGroup>
+	<PropertyGroup>
+		<Version>1.0.0</Version>
+		<PackageId>Audacia.UnitTest.Dependency.DependencyInjection</PackageId>
+		<Authors>Audacia</Authors>
+		<PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+		<Description>A helper library for combining a project's own service registration extensions (for example AddApplication) with the Audacia.UnitTest.Dependency TestTargetBuilder. Registered services come from the container, and anything they depend on that is not registered is built by the TestTargetBuilder.</Description>
+		<Copyright>Copyright © Audacia $([System.DateTime]::Now.Year)</Copyright>
+		<PackageTags>Audacia.UnitTest.Dependency.DependencyInjection, unittest</PackageTags>
+		<PackageIcon>package-icon.png</PackageIcon>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+	</PropertyGroup>
 
-    <ItemGroup>
-        <None Include="..\..\..\package-icon.png" Pack="true" PackagePath="\" />
-        <None Include="README.md" Pack="true" PackagePath="\" />
-        <None Include="..\..\..\LICENSE.txt" Pack="true" PackagePath="\" />
-    </ItemGroup>
+	<ItemGroup>
+		<None Include="..\..\..\package-icon.png" Pack="true" PackagePath="\" />
+		<None Include="README.md" Pack="true" PackagePath="\" />
+		<None Include="..\..\..\LICENSE.txt" Pack="true" PackagePath="\" />
+	</ItemGroup>
 
-    <ItemGroup>
-        <PackageReference Include="Audacia.CodeAnalysis" Version="2.1.0">
-          <PrivateAssets>all</PrivateAssets>
-          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        </PackageReference>
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
-    </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Audacia.CodeAnalysis" Version="2.1.0">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
+	</ItemGroup>
 
-    <ItemGroup>
-        <ProjectReference Include="..\Audacia.UnitTest.Dependency\Audacia.UnitTest.Dependency.csproj" />
-    </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\Audacia.UnitTest.Dependency\Audacia.UnitTest.Dependency.csproj" />
+	</ItemGroup>
 
 </Project>

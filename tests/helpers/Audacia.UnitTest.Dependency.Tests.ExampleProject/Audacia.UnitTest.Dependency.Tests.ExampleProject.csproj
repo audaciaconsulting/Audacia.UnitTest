@@ -2,8 +2,6 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <AssemblyName>Audacia.UnitTest.Dependency.Tests.ExampleProject</AssemblyName>
         <RootNamespace>Audacia.UnitTest.Dependency.Tests.ExampleProject</RootNamespace>

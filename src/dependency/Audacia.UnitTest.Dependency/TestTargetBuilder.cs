@@ -19,9 +19,9 @@ public class TestTargetBuilder
 
     private readonly string[] _excludeNamespaces;
 
-    private readonly IDictionary<Type, object> _services = new Dictionary<Type, object>();
+    private readonly Dictionary<Type, object> _services = [];
 
-    private readonly IDictionary<Type, object> _blueprints = new Dictionary<Type, object>();
+    private readonly Dictionary<Type, object> _blueprints = [];
 
     private readonly List<IDependencySource> _dependencySources = [];
 
@@ -34,6 +34,12 @@ public class TestTargetBuilder
     /// Made a static field as part of #167094, as we were getting errors dynamically loading assemblies when this was a local variable.
     /// </summary>
     private static readonly ConcurrentDictionary<string, IReadOnlyCollection<Type>> TypesForAssembly = new();
+
+    /// <summary>
+    /// The exported types of the blueprint assemblies, keyed by the consuming assembly, so they are only scanned once
+    /// rather than each time a dependency is resolved.
+    /// </summary>
+    private static readonly ConcurrentDictionary<string, IReadOnlyCollection<Type>> BlueprintAssemblyTypesForAssembly = new();
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TestTargetBuilder"/> class.
@@ -358,8 +364,7 @@ public class TestTargetBuilder
     {
         return _discoveredDependencySources ??=
         [
-            .. EntryPointAssembly.Load()
-                .GetAllBlueprintAssemblies()
+            .. GetBlueprintAssemblyTypes()
                 .GetDependencySourceTypes()
                 .Select(sourceType => (IDependencySource)Activator.CreateInstance(sourceType)!)
         ];
@@ -455,9 +460,7 @@ public class TestTargetBuilder
             return existingBlueprintDependency;
         }
 
-        var blueprintAssemblies = EntryPointAssembly.Load().GetAllBlueprintAssemblies();
-
-        var blueprintDependencyType = blueprintAssemblies.GetBlueprintDependencyType(dependencyType);
+        var blueprintDependencyType = GetBlueprintAssemblyTypes().GetBlueprintDependencyType(dependencyType);
         if (blueprintDependencyType is null)
         {
             return null;
@@ -484,6 +487,18 @@ public class TestTargetBuilder
                 $"Blueprint type {blueprintDependencyType.Name} is generic but dependency type {dependencyType.Name} is not generic",
                 dependencyType.Name)
             : blueprintDependencyType.MakeGenericType(dependencyType.GetGenericArguments());
+    }
+
+    /// <summary>
+    /// Gets the exported types of the assemblies blueprints and dependency sources are discovered in.
+    /// </summary>
+    private static IReadOnlyCollection<Type> GetBlueprintAssemblyTypes()
+    {
+        var executingAssembly = EntryPointAssembly.Load();
+
+        return BlueprintAssemblyTypesForAssembly.GetOrAdd(
+            executingAssembly.GetName().Name!,
+            _ => executingAssembly.GetAllBlueprintAssemblies().GetAllExportedTypes());
     }
 
     /// <summary>

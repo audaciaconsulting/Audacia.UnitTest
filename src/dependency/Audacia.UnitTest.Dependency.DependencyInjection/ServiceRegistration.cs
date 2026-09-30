@@ -1,4 +1,6 @@
+using System.Reflection;
 using System.Runtime.CompilerServices;
+using Audacia.UnitTest.Dependency.Exceptions;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Audacia.UnitTest.Dependency.DependencyInjection;
@@ -47,7 +49,7 @@ public abstract class ServiceRegistration : IDependencySource
     {
         var services = new ServiceCollection();
         Register(services);
-        var delegatedToBuilder = AddUnregisteredDependencies(services, builder);
+        var delegatedToBuilder = AddUnregisteredDependencies(services, builder, []);
 
         return new Container(services, delegatedToBuilder);
     }
@@ -57,7 +59,10 @@ public abstract class ServiceRegistration : IDependencySource
     /// its services. Each stand-in asks the builder for the real dependency.
     /// </summary>
     /// <returns>The types the stand-ins were added for.</returns>
-    private static HashSet<Type> AddUnregisteredDependencies(IServiceCollection services, TestTargetBuilder builder)
+    private static HashSet<Type> AddUnregisteredDependencies(
+        IServiceCollection services,
+        TestTargetBuilder builder,
+        HashSet<Type> inProgress)
     {
         var registered = services.Select(descriptor => descriptor.ServiceType).ToHashSet();
 
@@ -66,7 +71,7 @@ public abstract class ServiceRegistration : IDependencySource
             .OfType<Type>()
             .Where(type => !type.IsGenericTypeDefinition)
             .Distinct()
-            .SelectMany(type => type.GetConstructors().FirstOrDefault()?.GetParameters() ?? [])
+            .SelectMany(GetConstructorParameters)
             .Where(parameter => !parameter.HasDefaultValue)
             .Select(parameter => parameter.ParameterType)
             .Where(type => NeedsBuilder(type) && !registered.Contains(type))
@@ -75,10 +80,47 @@ public abstract class ServiceRegistration : IDependencySource
 
         foreach (var type in missing)
         {
-            services.AddSingleton(type, _ => builder.Build(type));
+            services.AddSingleton(type, _ => BuildWithoutCycle(type, builder, inProgress));
         }
 
         return [.. missing];
+    }
+
+    /// <summary>
+    /// Gets the parameters of the constructor the container will use, which is the public constructor with the most
+    /// parameters. Every parameter has a stand-in, so all of them can be satisfied.
+    /// </summary>
+    private static IEnumerable<ParameterInfo> GetConstructorParameters(Type implementationType)
+    {
+        return implementationType.GetConstructors()
+            .OrderByDescending(constructor => constructor.GetParameters().Length)
+            .FirstOrDefault()?.GetParameters() ?? [];
+    }
+
+    /// <summary>
+    /// Asks the builder for the <paramref name="type"/>. The builder starts a new dependency chain, so it cannot see that it
+    /// was asked by this container: if the type is needed again while it is still being built, the two are in a cycle
+    /// (the builder's class needs a registered service that needs the same type) and would otherwise wait on each other forever.
+    /// </summary>
+    /// <exception cref="TestTargetBuilderException">If the <paramref name="type"/> is already being built.</exception>
+    private static object BuildWithoutCycle(Type type, TestTargetBuilder builder, HashSet<Type> inProgress)
+    {
+        if (!inProgress.Add(type))
+        {
+            throw new TestTargetBuilderException(
+                $"{type.Name} is part of a circular dependency between the registered services and the classes the builder constructs. "
+                + "Register the type, or supply it with With or WithBlueprint, to break the cycle.",
+                type.Name);
+        }
+
+        try
+        {
+            return builder.Build(type);
+        }
+        finally
+        {
+            inProgress.Remove(type);
+        }
     }
 
     private static bool NeedsBuilder(Type type)

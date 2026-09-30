@@ -32,7 +32,7 @@ public sealed class AzureClientFactoryServiceBusBlueprint : AzureClientFactoryBl
 
     /// <summary>
     /// Creates a blueprint for an <see cref="IAzureClientFactory{TClient}"/>
-    /// for a <see cref="ServiceBusClient"/> with the given <paramref name="clientNames"/>s and <paramref name="client"/> instance.
+    /// for a <see cref="ServiceBusClient"/> with the given <paramref name="clientNames"/> and <paramref name="client"/> instance.
     /// </summary>
     /// <param name="clientNames">The names of the clients.</param>
     /// <param name="client">The instance of the client.</param>

@@ -13,6 +13,6 @@
 
     <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-        <NoWarn>$(NoWarn),AV2210</NoWarn>
+        <NoWarn>$(NoWarn);AV2210</NoWarn>
     </PropertyGroup>
 </Project>
