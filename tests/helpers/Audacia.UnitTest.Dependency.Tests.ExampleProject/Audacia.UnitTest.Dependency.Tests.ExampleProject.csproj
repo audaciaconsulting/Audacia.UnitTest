@@ -24,6 +24,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\..\src\dependency\Audacia.UnitTest.Dependency\Audacia.UnitTest.Dependency.csproj" />
+      <ProjectReference Include="..\..\..\src\dependency\Audacia.UnitTest.Dependency.DependencyInjection\Audacia.UnitTest.Dependency.DependencyInjection.csproj" />
     </ItemGroup>
 
 </Project>

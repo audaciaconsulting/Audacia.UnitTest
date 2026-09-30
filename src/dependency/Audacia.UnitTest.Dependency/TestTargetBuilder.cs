@@ -23,6 +23,12 @@ public class TestTargetBuilder
 
     private readonly IDictionary<Type, object> _blueprints = new Dictionary<Type, object>();
 
+    private readonly List<IDependencySource> _dependencySources = [];
+
+    private readonly List<DependencyResolution> _resolutions = [];
+
+    private IReadOnlyCollection<IDependencySource>? _discoveredDependencySources;
+
     /// <summary>
     /// All types that can be resolved as a dependency, keyed by their consuming assembly, project scope and exclusions.
     /// Made a static field as part of #167094, as we were getting errors dynamically loading assemblies when this was a local variable.
@@ -85,6 +91,21 @@ public class TestTargetBuilder
     }
 
     /// <summary>
+    /// Configures the Test Target Builder with a source of dependencies, which is consulted after any blueprint and before
+    /// the builder constructs a dependency itself. Sources added here are used before any that are discovered automatically.
+    /// </summary>
+    /// <param name="source">The source of dependencies.</param>
+    /// <returns>The Test Target builder.</returns>
+    public TestTargetBuilder WithDependencySource(IDependencySource source)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+
+        _dependencySources.Add(source);
+
+        return this;
+    }
+
+    /// <summary>
     /// Injects <see cref="IOptions{TOptions}"/> into the builder. When the test target or its dependencies accesses the value
     /// they will use the current value of the <paramref name="options"></paramref>,
     /// so you can modify the value whenever you need.
@@ -129,6 +150,23 @@ public class TestTargetBuilder
         var snapshot = new NamedOptionsSnapshot<TOptions>(namedOptions, defaultValue);
 
         return With<IOptionsSnapshot<TOptions>>(snapshot);
+    }
+
+    /// <summary>
+    /// Gets the dependencies the builder has chosen automatically so far, in the order they were completed, so a test
+    /// can see what it used. Dependencies supplied explicitly, for example with <see cref="With{TDependency}"/> or
+    /// <see cref="WithBlueprint{TDependency}"/>, are not included.
+    /// </summary>
+    public IReadOnlyList<DependencyResolution> Resolutions => _resolutions;
+
+    /// <summary>
+    /// Describes the dependencies the builder has chosen automatically so far, one per line, giving the full name of the
+    /// concrete type used and how it was chosen. Loggers and default options are summarised rather than listed.
+    /// </summary>
+    /// <returns>The description, or an empty string when nothing has been chosen automatically.</returns>
+    public string DescribeResolutions()
+    {
+        return ResolutionDescriber.Describe(_resolutions);
     }
 
     /// <summary>
@@ -192,14 +230,15 @@ public class TestTargetBuilder
 
     private object GetOrCreateService(
         Type type,
-        DependencyChain dependencyChain)
+        DependencyChain dependencyChain,
+        bool recordResolution = true)
     {
         if (_services.TryGetValue(type, out var service))
         {
             return service;
         }
 
-        var serviceInstance = ResolveService(type, dependencyChain);
+        var serviceInstance = ResolveService(type, dependencyChain, recordResolution);
 
         // Do not cache generic types, as the same definition resolves differently depending on its parent.
         if (!type.IsGenericType)
@@ -212,18 +251,27 @@ public class TestTargetBuilder
 
     private object ResolveService(
         Type type,
-        DependencyChain dependencyChain)
+        DependencyChain dependencyChain,
+        bool recordResolution)
     {
         try
         {
             dependencyChain.Push(type);
 
-            return GetDependencyFromBlueprint(type) ??
-                   GetClassService(type, dependencyChain) ??
-                   GetOptions(type, dependencyChain) ??
-                   GetLoggerService(type) ??
-                   GetInterfaceService(type, dependencyChain) ??
-                   throw new TestTargetBuilderException(GetErrorMessage(type, dependencyChain), type.Name);
+            var resolved = GetDependencyFromBlueprint(type) ??
+                           GetDependencyFromSources(type) ??
+                           Automatic(GetClassService(type, dependencyChain), ResolutionKind.Class) ??
+                           Automatic(GetOptions(type, dependencyChain), ResolutionKind.Options) ??
+                           Automatic(GetLoggerService(type), ResolutionKind.Logger) ??
+                           Automatic(GetInterfaceService(type, dependencyChain), ResolutionKind.Interface) ??
+                           throw new TestTargetBuilderException(GetErrorMessage(type, dependencyChain), type.Name);
+
+            if (recordResolution)
+            {
+                Record(type, resolved);
+            }
+
+            return resolved.Instance;
         }
         catch (TestTargetBuilderException)
         {
@@ -243,12 +291,78 @@ public class TestTargetBuilder
         }
     }
 
+    private static ResolvedDependency? Automatic(object? instance, ResolutionKind kind)
+    {
+        return instance is null ? null : new ResolvedDependency(instance, kind, null, IsExplicit: false);
+    }
+
+    private void Record(Type requestedType, ResolvedDependency resolved)
+    {
+        if (resolved.IsExplicit)
+        {
+            return;
+        }
+
+        var resolution = new DependencyResolution(requestedType, resolved.Kind, resolved.Via, resolved.Instance.GetType());
+        if (!_resolutions.Contains(resolution))
+        {
+            _resolutions.Add(resolution);
+        }
+    }
+
     /// <summary>
     /// Creates an instance of the <paramref name="dependencyType"/> from its blueprint, if one exists.
     /// </summary>
-    private object? GetDependencyFromBlueprint(Type dependencyType)
+    private ResolvedDependency? GetDependencyFromBlueprint(Type dependencyType)
     {
-        return GetBlueprintForDependency(dependencyType)?.BuildDependencyFromBlueprint();
+        var blueprint = GetBlueprintForDependency(dependencyType);
+
+        return blueprint is null
+            ? null
+            : new ResolvedDependency(
+                blueprint.BuildDependencyFromBlueprint(),
+                ResolutionKind.Blueprint,
+                blueprint.GetType(),
+                _blueprints.ContainsKey(dependencyType));
+    }
+
+    /// <summary>
+    /// Asks each dependency source, starting with those added explicitly, for the <paramref name="dependencyType"/>.
+    /// </summary>
+    private ResolvedDependency? GetDependencyFromSources(Type dependencyType)
+    {
+        foreach (var source in _dependencySources)
+        {
+            if (source.TryResolve(dependencyType, this, out var dependency) && dependency is not null)
+            {
+                return new ResolvedDependency(dependency, ResolutionKind.DependencySource, source.GetType(), IsExplicit: true);
+            }
+        }
+
+        foreach (var source in GetDiscoveredDependencySources())
+        {
+            if (source.TryResolve(dependencyType, this, out var dependency) && dependency is not null)
+            {
+                return new ResolvedDependency(dependency, ResolutionKind.DependencySource, source.GetType(), IsExplicit: false);
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Gets a new instance of every dependency source found in the blueprint assemblies. Found once per builder,
+    /// so a source can hold state for the builder it belongs to.
+    /// </summary>
+    private IReadOnlyCollection<IDependencySource> GetDiscoveredDependencySources()
+    {
+        return _discoveredDependencySources ??=
+        [
+            .. EntryPointAssembly.Load()
+                .GetAllBlueprintAssemblies()
+                .GetDependencySourceTypes()
+                .Select(sourceType => (IDependencySource)Activator.CreateInstance(sourceType)!)
+        ];
     }
 
     /// <summary>
@@ -292,7 +406,7 @@ public class TestTargetBuilder
         Type type,
         DependencyChain dependencyChain)
     {
-        return type.IsOptions() ? GetOrCreateService(type.GetOptionsWrapper(), dependencyChain) : null;
+        return type.IsOptions() ? GetOrCreateService(type.GetOptionsWrapper(), dependencyChain, recordResolution: false) : null;
     }
 
     /// <summary>
@@ -326,7 +440,7 @@ public class TestTargetBuilder
 
         var implementationType = type.GetInterfaceImplementationType(types);
 
-        return implementationType is null ? null : GetOrCreateService(implementationType, dependencyChain);
+        return implementationType is null ? null : GetOrCreateService(implementationType, dependencyChain, recordResolution: false);
     }
 
     /// <summary>
@@ -394,7 +508,7 @@ public class TestTargetBuilder
     /// <summary>
     /// Gets the error message for constructing the <paramref name="type"/> within the <paramref name="dependencyChain"/>.
     /// </summary>
-    private static string GetErrorMessage(
+    private string GetErrorMessage(
         Type type,
         DependencyChain dependencyChain)
     {
@@ -402,6 +516,20 @@ public class TestTargetBuilder
             ? $" (constructing these types: {dependencyChain.ToChainString()})"
             : string.Empty;
 
-        return $"Could not construct a service for {type.Name}{parentMessage}";
+        var resolved = DescribeResolutions();
+        var resolvedMessage = resolved.Length == 0
+            ? string.Empty
+            : $"{Environment.NewLine}Dependencies chosen automatically so far (those supplied with With, WithBlueprint and so on are not listed):{Environment.NewLine}{resolved}";
+
+        return $"Could not construct a service for {type.Name}{parentMessage}{resolvedMessage}";
     }
+
+    /// <summary>
+    /// A dependency the builder found, and how.
+    /// </summary>
+    /// <param name="Instance">The dependency.</param>
+    /// <param name="Kind">How it was found.</param>
+    /// <param name="Via">The blueprint or dependency source that supplied it, if any.</param>
+    /// <param name="IsExplicit">Whether the test asked for it, rather than the builder choosing it.</param>
+    private sealed record ResolvedDependency(object Instance, ResolutionKind Kind, Type? Via, bool IsExplicit);
 }

@@ -30,14 +30,16 @@ For each type in the graph the builder works down this list and takes the first 
 
 1. **An instance you registered** with `With`, `WithOptions` or `WithOptionsSnapshot`.
 2. **A blueprint** for the type — one registered with `WithBlueprint`, or one discovered automatically.
-3. **A class** — constructed via its first constructor, resolving each parameter the same way.
-4. **`IOptions<T>`** — wrapped in an `OptionsWrapper<T>`.
-5. **`ILogger<T>`** — supplied as a `NullLogger<T>`.
-6. **An interface** — resolved to an implementation found in the assemblies in scope.
+3. **A dependency source** — such as a registration of the project's own services, added with `WithDependencySource` or
+   discovered automatically. See [Services that need a container](#services-that-need-a-container).
+4. **A class** — constructed via its first constructor, resolving each parameter the same way.
+5. **`IOptions<T>`** — wrapped in an `OptionsWrapper<T>`.
+6. **`ILogger<T>`** — supplied as a `NullLogger<T>`.
+7. **An interface** — resolved to an implementation found in the assemblies in scope.
 
 If none apply, a `TestTargetBuilderException` is thrown naming the type and the chain of types being constructed.
 
-Step 6 only searches your own assemblies, so a framework interface with no implementation of yours — such as
+Step 7 only searches your own assemblies, so a framework interface with no implementation of yours — such as
 `IHttpClientFactory` — needs a blueprint or a registered instance. See [Faking HTTP](#faking-http).
 
 ## Replacing a dependency
@@ -219,6 +221,31 @@ await blueprint.MockDependency.Received(1)
 The Azure blueprints in [`Audacia.UnitTest.Dependency.Azure`](../Audacia.UnitTest.Dependency.Azure/README.md) are
 built this way.
 
+## Services that need a container
+
+Some dependencies cannot be built by scanning for an implementation, because they only work when a dependency injection
+container has registered them — `IMediator` and its handlers, for example. Rather than repeating that registration in
+every test, declare it once and the builder uses it whenever it meets a type the registration provides.
+
+A dependency source is anything implementing `IDependencySource`. It is asked for each type after blueprints and before
+the builder constructs the type itself, and anything it builds that depends on something it does not know about is passed
+back to the builder. Sources found in the blueprint assemblies with a parameterless constructor are used automatically,
+exactly as blueprints are; add one for a single test with `WithDependencySource`.
+
+For a project's `AddX` service registration methods, install
+[`Audacia.UnitTest.Dependency.DependencyInjection`](../Audacia.UnitTest.Dependency.DependencyInjection/README.md), which
+provides a ready-made source, including guidance for projects that use Audacia.Mediator:
+
+```csharp
+public sealed class ApplicationServiceRegistration : ServiceRegistration
+{
+    protected override void Register(IServiceCollection services)
+    {
+        services.AddApplication();
+    }
+}
+```
+
 ## Generic dependencies
 
 Open generic implementations are closed using the generic arguments of the interface being resolved. A target
@@ -248,13 +275,50 @@ var target = new TestTargetBuilder(["MyProduct.Legacy"])
 var target = builder.Build(typeof(AddPersonCommandHandler));
 ```
 
+## Seeing what was used
+
+Because dependencies are built for you, a test that passes or fails unexpectedly may have used one you were not thinking
+of. `DescribeResolutions` lists what the builder chose automatically, with the full name of the concrete type it used and
+how it chose it:
+
+```csharp
+var builder = new TestTargetBuilder();
+var target = builder.Build<AddPersonCommandHandler>();
+
+output.WriteLine(builder.DescribeResolutions());
+```
+
+```
+  PersonStore -> constructed: MyProduct.Data.PersonStore
+  IDatabaseContext -> blueprint: MyProduct.Tests.TestDatabaseContextBlueprint => MyProduct.Tests.TestDatabaseContext
+  IMediator -> dependency source: MyProduct.Tests.ApplicationServiceRegistration => MyProduct.Mediator.Mediator
+  IClock -> implementation found by scanning: MyProduct.Common.SystemClock
+  Also: 2 logger(s) that discard output, 0 default options
+```
+
+Each line gives the type that was needed, then how it was supplied — a blueprint or dependency source discovered
+automatically, a class the builder constructed itself, or an interface resolved to an implementation found by scanning —
+and the concrete type used. A substitute is marked as such. Dependencies you supplied yourself, with `With`,
+`WithOptions`, `WithBlueprint` or `WithDependencySource`, are left out, since you already know about them. Loggers and
+default options are summarised in one line.
+
+`builder.Resolutions` holds the same information as a list of `DependencyResolution` if you want to assert on it or format
+it differently. Entries appear in the order they were completed, so a class comes after the dependencies it was built from.
+The builder only sees what it resolves itself: services built inside a container (see
+[Services that need a container](#services-that-need-a-container)) appear as one entry for the service that was requested.
+
+Nothing is written unless you ask, so the output never adds noise to passing tests.
+
 ## When resolution fails
 
 `TestTargetBuilderException` reports the type that could not be built along with the chain that led to it, so the
-failure can be traced back to the target:
+failure can be traced back to the target. It also lists what the builder had already chosen automatically, in the same
+form as `DescribeResolutions`, so an unexpected choice earlier in the graph is visible next to the failure:
 
 ```
 Could not construct a service for IPersonStore (constructing these types: AddPersonCommandHandler > IPersonStore)
+Dependencies chosen automatically so far (those supplied with With, WithBlueprint and so on are not listed):
+  PersonValidator -> constructed: MyProduct.Validation.PersonValidator
 ```
 
 Its `Service` property holds the name of the type that failed. A `BlueprintDependencyException` indicates a problem

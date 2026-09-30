@@ -8,7 +8,7 @@
 	</PropertyGroup>
 
 	<PropertyGroup>
-		<Version>1.0.1-alpha</Version>
+		<Version>1.0.1</Version>
 		<PackageId>Audacia.UnitTest.Dependency.Azure</PackageId>
 		<Authors>Audacia</Authors>
 		<PackageLicenseFile>LICENSE.txt</PackageLicenseFile>

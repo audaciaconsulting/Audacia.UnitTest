@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
@@ -9,13 +9,13 @@
 
     <PropertyGroup>
         <Version>1.0.1</Version>
-        <PackageId>Audacia.UnitTest.Dependency.Http</PackageId>
+        <PackageId>Audacia.UnitTest.Dependency.DependencyInjection</PackageId>
         <Authors>Audacia</Authors>
-		<PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+        <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
         <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-        <Description>A helper library for creating blueprints for HttpClient. Install this NuGet package to provide a fake instance of HttpClient or HttpClientFactory.</Description>
+        <Description>A helper library for combining a project's own service registration extensions (for example AddApplication) with the Audacia.UnitTest.Dependency TestTargetBuilder. Registered services come from the container, and anything they depend on that is not registered is built by the TestTargetBuilder.</Description>
         <Copyright>Copyright © Audacia $([System.DateTime]::Now.Year)</Copyright>
-        <PackageTags>Audacia.UnitTest.Dependency.Http, unittest</PackageTags>
+        <PackageTags>Audacia.UnitTest.Dependency.DependencyInjection, unittest</PackageTags>
         <PackageIcon>package-icon.png</PackageIcon>
         <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
@@ -31,9 +31,7 @@
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.12" />
-        <PackageReference Include="NSubstitute" Version="6.2.0" />
-        <PackageReference Include="RichardSzalay.MockHttp" Version="7.1.0" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
     </ItemGroup>
 
     <ItemGroup>
