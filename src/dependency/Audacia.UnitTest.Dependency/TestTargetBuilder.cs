@@ -23,11 +23,7 @@ public class TestTargetBuilder
 
     private readonly Dictionary<Type, object> _blueprints = [];
 
-    private readonly List<IDependencySource> _dependencySources = [];
-
     private readonly List<DependencyResolution> _resolutions = [];
-
-    private IReadOnlyCollection<IDependencySource>? _discoveredDependencySources;
 
     /// <summary>
     /// All types that can be resolved as a dependency, keyed by their consuming assembly, project scope and exclusions.
@@ -94,21 +90,6 @@ public class TestTargetBuilder
         return !_blueprints.TryAdd(type, blueprint)
             ? throw new TestTargetBuilderException("This blueprint has already been added", nameof(blueprint))
             : this;
-    }
-
-    /// <summary>
-    /// Configures the Test Target Builder with a source of dependencies, which is consulted after any blueprint and before
-    /// the builder constructs a dependency itself. Sources added here are used before any that are discovered automatically.
-    /// </summary>
-    /// <param name="source">The source of dependencies.</param>
-    /// <returns>The Test Target builder.</returns>
-    public TestTargetBuilder WithDependencySource(IDependencySource source)
-    {
-        ArgumentNullException.ThrowIfNull(source);
-
-        _dependencySources.Add(source);
-
-        return this;
     }
 
     /// <summary>
@@ -265,7 +246,6 @@ public class TestTargetBuilder
             dependencyChain.Push(type);
 
             var resolved = GetDependencyFromBlueprint(type) ??
-                           GetDependencyFromSources(type) ??
                            Automatic(GetClassService(type, dependencyChain), ResolutionKind.Class) ??
                            Automatic(GetOptions(type, dependencyChain), ResolutionKind.Options) ??
                            Automatic(GetLoggerService(type), ResolutionKind.Logger) ??
@@ -330,44 +310,6 @@ public class TestTargetBuilder
                 ResolutionKind.Blueprint,
                 blueprint.GetType(),
                 _blueprints.ContainsKey(dependencyType));
-    }
-
-    /// <summary>
-    /// Asks each dependency source, starting with those added explicitly, for the <paramref name="dependencyType"/>.
-    /// </summary>
-    private ResolvedDependency? GetDependencyFromSources(Type dependencyType)
-    {
-        foreach (var source in _dependencySources)
-        {
-            if (source.TryResolve(dependencyType, this, out var dependency) && dependency is not null)
-            {
-                return new ResolvedDependency(dependency, ResolutionKind.DependencySource, source.GetType(), IsExplicit: true);
-            }
-        }
-
-        foreach (var source in GetDiscoveredDependencySources())
-        {
-            if (source.TryResolve(dependencyType, this, out var dependency) && dependency is not null)
-            {
-                return new ResolvedDependency(dependency, ResolutionKind.DependencySource, source.GetType(), IsExplicit: false);
-            }
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    /// Gets a new instance of every dependency source found in the blueprint assemblies. Found once per builder,
-    /// so a source can hold state for the builder it belongs to.
-    /// </summary>
-    private IReadOnlyCollection<IDependencySource> GetDiscoveredDependencySources()
-    {
-        return _discoveredDependencySources ??=
-        [
-            .. GetBlueprintAssemblyTypes()
-                .GetDependencySourceTypes()
-                .Select(sourceType => (IDependencySource)Activator.CreateInstance(sourceType)!)
-        ];
     }
 
     /// <summary>
@@ -490,7 +432,7 @@ public class TestTargetBuilder
     }
 
     /// <summary>
-    /// Gets the exported types of the assemblies blueprints and dependency sources are discovered in.
+    /// Gets the exported types of the assemblies blueprints are discovered in.
     /// </summary>
     private static IReadOnlyCollection<Type> GetBlueprintAssemblyTypes()
     {
@@ -544,7 +486,7 @@ public class TestTargetBuilder
     /// </summary>
     /// <param name="Instance">The dependency.</param>
     /// <param name="Kind">How it was found.</param>
-    /// <param name="Via">The blueprint or dependency source that supplied it, if any.</param>
+    /// <param name="Via">The blueprint that supplied it, if any.</param>
     /// <param name="IsExplicit">Whether the test asked for it, rather than the builder choosing it.</param>
     private sealed record ResolvedDependency(object Instance, ResolutionKind Kind, Type? Via, bool IsExplicit);
 }

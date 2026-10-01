@@ -11,11 +11,6 @@ public enum ResolutionKind
     Blueprint,
 
     /// <summary>
-    /// Supplied by a dependency source that was discovered automatically, such as a registration of the project's own services.
-    /// </summary>
-    DependencySource,
-
-    /// <summary>
     /// A class constructed by the builder, with each of its constructor parameters resolved in turn.
     /// </summary>
     Class,

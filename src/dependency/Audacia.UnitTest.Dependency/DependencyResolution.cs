@@ -6,7 +6,7 @@ namespace Audacia.UnitTest.Dependency;
 /// </summary>
 /// <param name="RequestedType">The type that was needed.</param>
 /// <param name="Kind">How the builder chose to supply it.</param>
-/// <param name="Via">The blueprint or dependency source that supplied it, when there was one.</param>
+/// <param name="Via">The blueprint that supplied it, when there was one.</param>
 /// <param name="ImplementationType">The concrete type of the instance that was used.</param>
 public sealed record DependencyResolution(
     Type RequestedType,

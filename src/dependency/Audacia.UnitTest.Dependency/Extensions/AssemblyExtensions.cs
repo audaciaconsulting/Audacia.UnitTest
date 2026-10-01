@@ -134,19 +134,6 @@ internal static class AssemblyExtensions
             .FirstOrDefault(blueprintType => blueprintType.IsBlueprintFor(dependencyType));
     }
 
-    /// <summary>
-    /// Gets the concrete classes in the given <paramref name="types"/> that implement <see cref="IDependencySource"/>
-    /// and can be created without arguments.
-    /// </summary>
-    /// <param name="types">The types to search.</param>
-    /// <returns>The dependency source types.</returns>
-    internal static IEnumerable<Type> GetDependencySourceTypes(this IEnumerable<Type> types)
-    {
-        return types
-            .Where(type => type is { IsClass: true, IsAbstract: false } && typeof(IDependencySource).IsAssignableFrom(type))
-            .Where(type => type.GetConstructor(Type.EmptyTypes) is not null);
-    }
-
     private static bool IsExcluded(this AssemblyName assemblyName, IReadOnlyCollection<string> excludeNamespaces)
     {
         return excludeNamespaces.Any(

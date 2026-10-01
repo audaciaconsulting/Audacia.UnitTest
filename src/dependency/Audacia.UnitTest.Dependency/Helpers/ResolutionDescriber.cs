@@ -39,7 +39,6 @@ internal static class ResolutionDescriber
         return resolution.Kind switch
         {
             ResolutionKind.Blueprint => $"  {requested} -> blueprint: {GetName(resolution.Via!, fullName: true)} => {used}{substitute}",
-            ResolutionKind.DependencySource => $"  {requested} -> dependency source: {GetName(resolution.Via!, fullName: true)} => {used}{substitute}",
             ResolutionKind.Interface => $"  {requested} -> implementation found by scanning: {used}",
             ResolutionKind.Class => $"  {requested} -> constructed: {used}",
             ResolutionKind.Options => $"  {requested} -> default options: {used}",
