@@ -10,9 +10,14 @@ public class BlueprintDependency<TDependency> : IBlueprintDependency<TDependency
     where TDependency : class
 {
     /// <summary>
-    /// Gets or sets the mock instance of the dependency.
+    /// Gets or sets the mock instance of the dependency. A substitute is only created when this is first used,
+    /// so a blueprint that overrides <see cref="Build"/> never creates one.
     /// </summary>
-    public TDependency MockDependency { get; set; } = Substitute.For<TDependency>();
+    public TDependency MockDependency
+    {
+        get => field ??= Substitute.For<TDependency>();
+        set;
+    }
 
     /// <summary>
     /// Gets customisations to apply to mock instance of dependency.

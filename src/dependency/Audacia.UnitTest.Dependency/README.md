@@ -104,8 +104,8 @@ entry is used.
 ## Blueprints
 
 A blueprint describes how to build one dependency, so the same setup can be shared across tests instead of repeated.
-Implement `IBlueprintDependency<TDependency>` directly, or derive from the abstract `BlueprintDependency<TDependency>`
-instead when the blueprint has no base class of its own:
+Implement `IBlueprintDependency<TDependency>` directly, or derive from `BlueprintDependency<TDependency>` instead
+when the blueprint has no base class of its own (see [Customised blueprints for substitutes](#customised-blueprints-for-substitutes)):
 
 ```csharp
 public sealed class ReportFormatterBlueprint : IBlueprintDependency<IReportFormatter>
