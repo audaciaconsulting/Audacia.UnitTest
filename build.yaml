@@ -1,0 +1,47 @@
+name: $(Year:yy)$(DayOfYear).$(Rev:r)
+trigger:
+  - main
+pr:
+  branches:
+    include:
+      - main
+resources:
+  repositories:
+    - repository: templates
+      type: github
+      endpoint: shared-github
+      name: audaciaconsulting/Audacia.Build
+pool:
+  vmImage: windows-latest
+variables:
+  - group: Code Signing
+
+stages:
+- stage: Stage_Build
+  displayName: Build
+  jobs:
+  - template: src/build/dotnet/jobs/signed-nuget-package.job.yaml@templates
+    parameters:
+      trustedSigningEndpoint: $(TrustedSigningEndpoint)
+      trustedSigningAccount: $(TrustedSigningAccount)
+      trustedSigningCertificateProfile: $(TrustedSigningCertificateProfile)
+      serviceConnection: 'Audacia Code Signing'
+      directory: $(Build.SourcesDirectory)/src/dependency
+      fileToSignPattern: 'Audacia.UnitTest.Dependency*.dll'
+      projects: 'src/**/*.csproj'
+      workingDirectory: 'src/dependency'
+      excludePaths: '*.Test*.csproj'
+      packageSource: 'internalPublic'
+      dotNetVersion: '10.0.x'
+
+- stage: Stage_Release
+  displayName: Release
+  dependsOn: Stage_Build
+  condition: >
+    and(
+      succeeded(),
+      notIn(variables['Build.Reason'], 'PullRequest', 'Schedule'),
+      eq(dependencies.Stage_Build.outputs['Job_Build.UpdateVersions.ShouldPublish'], true)
+    )
+  jobs:
+    - template: src/deployment/nuget/jobs/internal-public-nuget-package.job.yaml@templates
