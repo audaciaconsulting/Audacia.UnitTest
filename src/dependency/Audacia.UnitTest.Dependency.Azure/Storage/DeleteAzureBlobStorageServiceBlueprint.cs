@@ -1,6 +1,6 @@
 ﻿using Audacia.Azure.BlobStorage.DeleteBlob;
 using Audacia.Azure.BlobStorage.DeleteBlob.Commands;
-using Audacia.UnitTest.Dependency.Customisations;
+using Audacia.UnitTest.Dependency.Blueprints;
 using Azure;
 using NSubstitute;
 
@@ -10,7 +10,7 @@ namespace Audacia.UnitTest.Dependency.Azure.Storage;
 /// A blueprint for an <see cref="IDeleteAzureBlobStorageService"/>.
 /// This is the object for deleting blobs from blob storage.
 /// </summary>
-public sealed class DeleteAzureBlobStorageServiceBlueprint : CustomisedBlueprintDependency<IDeleteAzureBlobStorageService>
+public sealed class DeleteAzureBlobStorageServiceBlueprint : BlueprintDependency<IDeleteAzureBlobStorageService>
 {
     private const int ServiceUnavailableStatus = 503;
 

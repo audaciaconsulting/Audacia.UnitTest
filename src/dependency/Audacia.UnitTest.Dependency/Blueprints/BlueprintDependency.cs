@@ -1,13 +1,12 @@
-﻿using Audacia.UnitTest.Dependency.Customisations;
-using NSubstitute;
+﻿using NSubstitute;
 
-namespace Audacia.UnitTest.Dependency;
+namespace Audacia.UnitTest.Dependency.Blueprints;
 
 /// <summary>
-/// Blueprint for how to create a dependency of <typeparamref name="TDependency"/> with customisations applied to the mock instance.
+/// Blueprint for how to create a dependency of <typeparamref name="TDependency"/>.
 /// </summary>
 /// <typeparam name="TDependency">The type of the dependency which is to be created by the blueprint.</typeparam>
-public class CustomisedBlueprintDependency<TDependency> : BlueprintDependency<TDependency>
+public class BlueprintDependency<TDependency> : IBlueprintDependency<TDependency>
     where TDependency : class
 {
     /// <summary>
@@ -21,7 +20,7 @@ public class CustomisedBlueprintDependency<TDependency> : BlueprintDependency<TD
     public ICollection<IBlueprintCustomisation<TDependency>> Customisations { get; } = [];
 
     /// <inheritdoc />
-    public override TDependency Build()
+    public virtual TDependency Build()
     {
         foreach (var customisation in Customisations)
         {

@@ -1,7 +1,7 @@
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 
-namespace Audacia.UnitTest.Dependency.Customisations;
+namespace Audacia.UnitTest.Dependency.Blueprints;
 
 /// <summary>
 /// Customisation for a blueprint that uses a substitute dependency.

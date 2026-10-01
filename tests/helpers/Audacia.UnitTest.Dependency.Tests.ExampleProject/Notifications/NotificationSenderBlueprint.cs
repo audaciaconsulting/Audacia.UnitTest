@@ -1,13 +1,13 @@
-using Audacia.UnitTest.Dependency.Customisations;
+using Audacia.UnitTest.Dependency.Blueprints;
 using NSubstitute;
 
 namespace Audacia.UnitTest.Dependency.Tests.ExampleProject.Notifications;
 
 /// <summary>
-/// A blueprint that derives from <see cref="CustomisedBlueprintDependency{TDependency}"/>, so the
+/// A blueprint that derives from <see cref="BlueprintDependency{TDependency}"/>, so the
 /// dependency is a substitute with the customisations below applied.
 /// </summary>
-public sealed class NotificationSenderBlueprint : CustomisedBlueprintDependency<INotificationSender>
+public sealed class NotificationSenderBlueprint : BlueprintDependency<INotificationSender>
 {
     /// <summary>
     /// The channel returned by the default blueprint.

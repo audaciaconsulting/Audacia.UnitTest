@@ -1,4 +1,4 @@
-namespace Audacia.UnitTest.Dependency.Customisations;
+namespace Audacia.UnitTest.Dependency.Blueprints;
 
 /// <summary>
 /// Interface for customising a dependency to override the default behaviour.

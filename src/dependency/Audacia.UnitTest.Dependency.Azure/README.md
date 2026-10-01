@@ -173,7 +173,7 @@ await sender.Received(1).SendMessageAsync(Arg.Any<ServiceBusMessage>(), Arg.Any<
 
 ## Customising a blueprint
 
-The base class for these blueprints is `CustomisedBlueprintDependency<T>`. Derive from it, or from
+The base class for these blueprints is `BlueprintDependency<T>`. Derive from it, or from
 `AzureClientFactoryBlueprint<TClient>` for an `IAzureClientFactory<TClient>`, to make a blueprint for a client type
 not covered above. Add a `BlueprintCustomisation` for each call you want to configure; the factory base class also
 provides `SetupNamedClient`, `SetupNamedClients` and `SetupAnyNamedClient` for registering clients by name.

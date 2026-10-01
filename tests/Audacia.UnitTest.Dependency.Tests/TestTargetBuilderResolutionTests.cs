@@ -1,4 +1,4 @@
-using Audacia.UnitTest.Dependency.Customisations;
+using Audacia.UnitTest.Dependency.Blueprints;
 using Audacia.UnitTest.Dependency.Exceptions;
 using Audacia.UnitTest.Dependency.Http.Blueprints;
 using Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.Asset.Add;
@@ -35,7 +35,7 @@ public class TestTargetBuilderResolutionTests
     {
         // Arrange
         // INotificationSender has no implementation, so it can only come from NotificationSenderBlueprint,
-        // which derives from CustomisedBlueprintDependency<T> and is never registered with the builder.
+        // which derives from BlueprintDependency<T> and is never registered with the builder.
 
         // Act
         var target = new TestTargetBuilder().Build<NotificationService>();

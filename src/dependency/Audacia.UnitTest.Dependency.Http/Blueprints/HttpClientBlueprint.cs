@@ -1,4 +1,5 @@
-﻿using Audacia.UnitTest.Dependency.Http.Builders;
+﻿using Audacia.UnitTest.Dependency.Blueprints;
+using Audacia.UnitTest.Dependency.Http.Builders;
 
 namespace Audacia.UnitTest.Dependency.Http.Blueprints;
 

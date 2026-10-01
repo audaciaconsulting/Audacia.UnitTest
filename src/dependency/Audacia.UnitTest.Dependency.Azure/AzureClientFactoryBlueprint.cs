@@ -1,4 +1,4 @@
-﻿using Audacia.UnitTest.Dependency.Customisations;
+﻿using Audacia.UnitTest.Dependency.Blueprints;
 using Microsoft.Extensions.Azure;
 using NSubstitute;
 
@@ -9,7 +9,7 @@ namespace Audacia.UnitTest.Dependency.Azure;
 /// </summary>
 /// <typeparam name="TClient">The type of the client.</typeparam>
 public abstract class AzureClientFactoryBlueprint<TClient>
-    : CustomisedBlueprintDependency<IAzureClientFactory<TClient>> where TClient : class
+    : BlueprintDependency<IAzureClientFactory<TClient>> where TClient : class
 {
     /// <summary>
     /// Registers a customisation for a client instance for the given name.

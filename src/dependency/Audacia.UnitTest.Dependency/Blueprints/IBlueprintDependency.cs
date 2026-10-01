@@ -1,4 +1,4 @@
-﻿namespace Audacia.UnitTest.Dependency;
+﻿namespace Audacia.UnitTest.Dependency.Blueprints;
 
 /// <summary>
 /// Blueprint for how to create a dependency of <typeparamref name="TDependency"/>.

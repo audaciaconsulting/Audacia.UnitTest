@@ -1,5 +1,5 @@
 ﻿using Audacia.Commands;
-using Audacia.UnitTest.Dependency.Customisations;
+using Audacia.UnitTest.Dependency.Blueprints;
 using Audacia.UnitTest.Dependency.Exceptions;
 using Audacia.UnitTest.Dependency.Http.Blueprints;
 using Audacia.UnitTest.Dependency.Http.Builders;
@@ -225,7 +225,7 @@ public class TestTargetBuilderTests
     public async Task Should_apply_a_result_customisation_to_an_async_call_on_a_customised_blueprint()
     {
         // Arrange
-        var blueprint = new CustomisedBlueprintDependency<INotificationSender>();
+        var blueprint = new BlueprintDependency<INotificationSender>();
         blueprint.Customisations.Add(SendReturns(false));
 
         // Act
@@ -242,7 +242,7 @@ public class TestTargetBuilderTests
     public async Task Should_apply_an_exception_customisation_to_an_async_call_on_a_customised_blueprint()
     {
         // Arrange
-        var blueprint = new CustomisedBlueprintDependency<INotificationSender>();
+        var blueprint = new BlueprintDependency<INotificationSender>();
         blueprint.Customisations.Add(new BlueprintCustomisation<INotificationSender, bool>(
             sender => sender.SendAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()),
             new TimeoutException()));
@@ -261,7 +261,7 @@ public class TestTargetBuilderTests
     public void Should_apply_a_result_customisation_to_a_synchronous_call_on_a_customised_blueprint()
     {
         // Arrange
-        var blueprint = new CustomisedBlueprintDependency<INotificationSender>();
+        var blueprint = new BlueprintDependency<INotificationSender>();
         blueprint.Customisations.Add(new BlueprintCustomisation<INotificationSender, string>(
             sender => sender.GetChannel(),
             "sms"));
@@ -279,7 +279,7 @@ public class TestTargetBuilderTests
     public void Should_apply_an_exception_customisation_to_a_synchronous_call_on_a_customised_blueprint()
     {
         // Arrange
-        var blueprint = new CustomisedBlueprintDependency<INotificationSender>();
+        var blueprint = new BlueprintDependency<INotificationSender>();
         blueprint.Customisations.Add(new BlueprintCustomisation<INotificationSender, string>(
             sender => sender.GetChannel(),
             new InvalidOperationException()));
@@ -298,7 +298,7 @@ public class TestTargetBuilderTests
     public async Task Should_use_the_last_customisation_added_when_two_match_the_same_call()
     {
         // Arrange
-        var blueprint = new CustomisedBlueprintDependency<INotificationSender>();
+        var blueprint = new BlueprintDependency<INotificationSender>();
         blueprint.Customisations.Add(SendReturns(true));
         blueprint.Customisations.Add(SendReturns(false));
 
@@ -316,7 +316,7 @@ public class TestTargetBuilderTests
     public async Task Should_only_apply_a_customisation_to_calls_matching_its_arguments()
     {
         // Arrange
-        var blueprint = new CustomisedBlueprintDependency<INotificationSender>();
+        var blueprint = new BlueprintDependency<INotificationSender>();
         blueprint.Customisations.Add(new BlueprintCustomisation<INotificationSender, bool>(
             sender => sender.SendAsync(Arg.Is<string>(message => message == "Hello"), Arg.Any<CancellationToken>()),
             true));
@@ -353,7 +353,7 @@ public class TestTargetBuilderTests
     public async Task Should_build_a_working_substitute_from_a_customised_blueprint_with_no_customisations()
     {
         // Arrange
-        var blueprint = new CustomisedBlueprintDependency<INotificationSender>();
+        var blueprint = new BlueprintDependency<INotificationSender>();
 
         // Act
         var target = new TestTargetBuilder()
@@ -369,7 +369,7 @@ public class TestTargetBuilderTests
     public void Should_have_a_mock_dependency_before_a_customised_blueprint_is_built()
     {
         // Act
-        var blueprint = new CustomisedBlueprintDependency<INotificationSender>();
+        var blueprint = new BlueprintDependency<INotificationSender>();
 
         // Assert
         blueprint.MockDependency.ShouldNotBeNull();
@@ -409,7 +409,7 @@ public class TestTargetBuilderTests
     public async Task Should_apply_customisations_added_after_a_customised_blueprint_was_first_built()
     {
         // Arrange
-        var blueprint = new CustomisedBlueprintDependency<INotificationSender>();
+        var blueprint = new BlueprintDependency<INotificationSender>();
         blueprint.Build();
         blueprint.Customisations.Add(SendReturns(true));
 

@@ -1,4 +1,4 @@
-using Audacia.UnitTest.Dependency.Customisations;
+using Audacia.UnitTest.Dependency.Blueprints;
 using Azure.Messaging.ServiceBus;
 using NSubstitute;
 
@@ -9,7 +9,7 @@ namespace Audacia.UnitTest.Dependency.Azure.ServiceBus;
 /// This is the object for sending messages to a service bus queue/topic.
 /// Sending a single message, sending multiple messages, scheduling messages and creating a message batch are all covered.
 /// </summary>
-public sealed class ServiceBusSenderBlueprint : CustomisedBlueprintDependency<ServiceBusSender>
+public sealed class ServiceBusSenderBlueprint : BlueprintDependency<ServiceBusSender>
 {
     private const long ScheduledSequenceNumber = 1;
 

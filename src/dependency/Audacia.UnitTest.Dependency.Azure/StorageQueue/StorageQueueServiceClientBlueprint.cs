@@ -1,4 +1,4 @@
-﻿using Audacia.UnitTest.Dependency.Customisations;
+﻿using Audacia.UnitTest.Dependency.Blueprints;
 using Azure.Storage.Queues;
 using NSubstitute;
 
@@ -8,7 +8,7 @@ namespace Audacia.UnitTest.Dependency.Azure.StorageQueue;
 /// A blueprint for a <see cref="QueueServiceClient"/>.
 /// This is the object for managing all interactions with queues in a storage account.
 /// </summary>
-public sealed class StorageQueueServiceClientBlueprint : CustomisedBlueprintDependency<QueueServiceClient>
+public sealed class StorageQueueServiceClientBlueprint : BlueprintDependency<QueueServiceClient>
 {
     /// <summary>
     /// Creates a default <see cref="StorageQueueServiceClientBlueprint"/> where any queue name

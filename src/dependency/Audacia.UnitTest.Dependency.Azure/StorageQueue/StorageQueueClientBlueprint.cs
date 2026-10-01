@@ -1,4 +1,4 @@
-﻿using Audacia.UnitTest.Dependency.Customisations;
+﻿using Audacia.UnitTest.Dependency.Blueprints;
 using Azure;
 using Azure.Storage.Queues;
 using Azure.Storage.Queues.Models;
@@ -10,7 +10,7 @@ namespace Audacia.UnitTest.Dependency.Azure.StorageQueue;
 /// A blueprint for a <see cref="QueueClient"/>.
 /// This is the object for sending messages to a storage queue.
 /// </summary>
-public sealed class StorageQueueClientBlueprint : CustomisedBlueprintDependency<QueueClient>
+public sealed class StorageQueueClientBlueprint : BlueprintDependency<QueueClient>
 {
     private const int ServiceUnavailableStatus = 503;
 

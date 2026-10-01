@@ -1,6 +1,6 @@
 ﻿using Audacia.Azure.BlobStorage.AddBlob;
 using Audacia.Azure.BlobStorage.AddBlob.Commands;
-using Audacia.UnitTest.Dependency.Customisations;
+using Audacia.UnitTest.Dependency.Blueprints;
 using Azure;
 using NSubstitute;
 
@@ -10,7 +10,7 @@ namespace Audacia.UnitTest.Dependency.Azure.Storage;
 /// A blueprint for an <see cref="IAddAzureBlobStorageService"/>.
 /// This is the object for adding blobs to blob storage, from bytes, base 64, a file or a stream.
 /// </summary>
-public sealed class AddAzureBlobStorageServiceBlueprint : CustomisedBlueprintDependency<IAddAzureBlobStorageService>
+public sealed class AddAzureBlobStorageServiceBlueprint : BlueprintDependency<IAddAzureBlobStorageService>
 {
     private const int ServiceUnavailableStatus = 503;
 

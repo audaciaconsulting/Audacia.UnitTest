@@ -1,4 +1,4 @@
-using Audacia.UnitTest.Dependency.Customisations;
+using Audacia.UnitTest.Dependency.Blueprints;
 using Azure.Messaging.ServiceBus;
 using NSubstitute;
 

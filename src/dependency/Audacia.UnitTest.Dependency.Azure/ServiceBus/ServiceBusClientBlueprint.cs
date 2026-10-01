@@ -1,4 +1,4 @@
-﻿using Audacia.UnitTest.Dependency.Customisations;
+﻿using Audacia.UnitTest.Dependency.Blueprints;
 using Azure.Messaging.ServiceBus;
 using NSubstitute;
 
@@ -8,7 +8,7 @@ namespace Audacia.UnitTest.Dependency.Azure.ServiceBus;
 /// A blueprint for a <see cref="ServiceBusClient"/>.
 /// This is the object for managing all interactions with entities in a service bus namespace.
 /// </summary>
-public sealed class ServiceBusClientBlueprint : CustomisedBlueprintDependency<ServiceBusClient>
+public sealed class ServiceBusClientBlueprint : BlueprintDependency<ServiceBusClient>
 {
     /// <summary>
     /// Creates a default <see cref="ServiceBusClientBlueprint"/> where any sender name

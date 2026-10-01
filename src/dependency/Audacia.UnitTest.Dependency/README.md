@@ -147,12 +147,12 @@ can be applied more than once:
 ### Customised blueprints for substitutes
 
 When a dependency should be an NSubstitute substitute with some behaviour set up, you can derive from
-`CustomisedBlueprintDependency<TDependency>` instead of writing `Build` yourself. Add an
+`BlueprintDependency<TDependency>` instead of writing `Build` yourself. Add an
 `IBlueprintCustomisation<TDependency>` to its `Customisations` collection for each call you want to configure;
 `Build` creates the substitute and applies them in the order they were added:
 
 ```csharp
-public sealed class PersonStoreBlueprint : CustomisedBlueprintDependency<IPersonStore>
+public sealed class PersonStoreBlueprint : BlueprintDependency<IPersonStore>
 {
     public PersonStoreBlueprint()
     {
