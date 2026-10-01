@@ -1,7 +1,4 @@
-using Audacia.UnitTest.Dependency.DependencyInjection;
 using Audacia.UnitTest.Dependency.Exceptions;
-using Audacia.UnitTest.Dependency.Tests.ExampleProject.Services;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Shouldly;
 
@@ -34,31 +31,6 @@ public sealed class DependencyResolutionTests
     public void A_dependency_supplied_with_an_explicit_blueprint_is_not_listed()
     {
         var builder = new TestTargetBuilder().WithBlueprint(new PartBlueprint());
-
-        builder.Build<PartConsumer>();
-
-        builder.Resolutions.ShouldNotContain(resolution => resolution.RequestedType == typeof(IPart));
-    }
-
-    [Fact]
-    public void A_dependency_supplied_by_a_discovered_source_names_the_source_and_the_type_used()
-    {
-        var builder = new TestTargetBuilder().With<IUnregisteredPart>(new FixedPart());
-
-        builder.Build<RegisteredOnlyServiceUser>();
-
-        var resolution = builder.Resolutions.Single(candidate => candidate.RequestedType == typeof(IRegisteredOnlyService));
-        resolution.Kind.ShouldBe(ResolutionKind.DependencySource);
-        resolution.Via.ShouldBe(typeof(ExampleServiceRegistration));
-        resolution.ImplementationType.Name.ShouldBe("RegisteredOnlyService");
-        builder.Resolutions.ShouldNotContain(resolution => resolution.RequestedType == typeof(IUnregisteredPart));
-    }
-
-    [Fact]
-    public void A_dependency_supplied_with_WithServices_is_not_listed()
-    {
-        var builder = new TestTargetBuilder()
-            .WithServices(services => services.AddScoped<IPart, Part>());
 
         builder.Build<PartConsumer>();
 
@@ -133,11 +105,6 @@ public sealed class DependencyResolutionTests
     internal sealed class PartConsumer(IPart part)
     {
         public IPart Part => part;
-    }
-
-    internal sealed class FixedPart : IUnregisteredPart
-    {
-        public string Name => "fixed";
     }
 
     internal sealed class LoggingConsumer(ILogger<LoggingConsumer> logger)

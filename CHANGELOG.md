@@ -28,14 +28,7 @@ Initial creation of the `Audacia.UnitTest` repo.
 
 ### Added
 
-- `Audacia.UnitTest.Dependency.DependencyInjection`
-  - `ServiceRegistration` base class: derive one class in the test project and it is discovered automatically
-  - `WithServices(...)` extension for a registration used by a single test.
-  - guidance for using the package with Audacia.Mediator
-  - the dependencies of a registered class's longest constructor are supplied by the builder
-- `IDependencySource` and `WithDependencySource`- a source of dependencies that is
-  consulted after blueprints and before the builder constructs a type itself
-- Visibility of automatic choices - lists the concrete class, blueprint or dependency source the builder chose for each
+- Visibility of automatic choices - lists the concrete class or blueprint the builder chose for each
   dependency supplied automatically
 - `Audacia.UnitTest.Dependency.Azure` - blueprints for Azure Service Bus, Storage Queue and Blob Storage clients
 - Customisation of the `TestTargetBuilder` to allow a test target to be built with a specific dependency, or a specific dependency to be built with a specific dependency, and so on recursively.

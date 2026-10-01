@@ -5,7 +5,6 @@ The `Audacia.UnitTest` repo contains multiple packages with each having a purpos
 - Audacia.UnitTest.Dependency
 - Audacia.UnitTest.Dependency.Http
 - Audacia.UnitTest.Dependency.Azure
-- Audacia.UnitTest.Dependency.DependencyInjection
 
 ## Audacia.UnitTest.Dependency
 
@@ -28,12 +27,6 @@ For more details on how to use `Audacia.UnitTest.Dependency.Http` see the packag
 The purpose of `Audacia.UnitTest.Dependency.Azure` is to provide blueprints for the Azure services at the outer edge of an application, so a test target that sends to Service Bus or a Storage Queue, or adds and deletes blobs, is given a fake instance that accepts every call, or can be made to fail, without needing an Azure account.
 
 For more details on how to use `Audacia.UnitTest.Dependency.Azure` see the package [README](./src/dependency/Audacia.UnitTest.Dependency.Azure/README.md).
-
-## Audacia.UnitTest.Dependency.DependencyInjection
-
-The purpose of `Audacia.UnitTest.Dependency.DependencyInjection` is to let the `TestTargetBuilder` use a project's own service registration, such as an `AddApplication` extension method. The registration is declared once in the test project, and a test target then gets the services the container provides (for example `IMediator` and its handlers) while everything else it depends on is still built by the `TestTargetBuilder`. It includes guidance on using this with Audacia.Mediator.
-
-For more details on how to use `Audacia.UnitTest.Dependency.DependencyInjection` see the package [README](./src/dependency/Audacia.UnitTest.Dependency.DependencyInjection/README.md).
 
 # Contributing
 
