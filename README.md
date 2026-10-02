@@ -5,6 +5,7 @@ The `Audacia.UnitTest` repo contains multiple packages with each having a purpos
 - Audacia.UnitTest.Dependency
 - Audacia.UnitTest.Dependency.Http
 - Audacia.UnitTest.Dependency.Azure
+- Audacia.UnitTest.Dependency.Mediator
 
 ## Audacia.UnitTest.Dependency
 
@@ -27,6 +28,12 @@ For more details on how to use `Audacia.UnitTest.Dependency.Http` see the packag
 The purpose of `Audacia.UnitTest.Dependency.Azure` is to provide blueprints for the Azure services at the outer edge of an application, so a test target that sends to Service Bus or a Storage Queue, or adds and deletes blobs, is given a fake instance that accepts every call, or can be made to fail, without needing an Azure account.
 
 For more details on how to use `Audacia.UnitTest.Dependency.Azure` see the package [README](./src/dependency/Audacia.UnitTest.Dependency.Azure/README.md).
+
+## Audacia.UnitTest.Dependency.Mediator
+
+The purpose of `Audacia.UnitTest.Dependency.Mediator` is to let a test target that depends on `IMediator` from `Audacia.Mediator` send requests through the real pipeline, with handlers, pipeline behaviours and validators built by the `TestTargetBuilder`.
+
+For more details on how to use `Audacia.UnitTest.Dependency.Mediator` see the package [README](./src/dependency/Audacia.UnitTest.Dependency.Mediator/README.md).
 
 # Contributing
 
