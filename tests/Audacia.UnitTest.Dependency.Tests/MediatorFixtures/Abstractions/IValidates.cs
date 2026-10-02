@@ -1,4 +1,4 @@
-namespace Audacia.UnitTest.Dependency.Tests.MediatorFixtures;
+namespace Audacia.UnitTest.Dependency.Tests.MediatorFixtures.Abstractions;
 
 /// <summary>
 /// A validator interface that is not FluentValidation's, to show any validation library can be used.

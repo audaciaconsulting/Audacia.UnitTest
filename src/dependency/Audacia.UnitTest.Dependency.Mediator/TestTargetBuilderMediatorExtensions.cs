@@ -133,25 +133,98 @@ public static class TestTargetBuilderMediatorExtensions
         return builder;
     }
 
+    /// <summary>
+    /// Replaces the handler for requests of type <typeparamref name="TRequest"/> in the mediator provided with
+    /// <c>WithMediator</c>, so a request sent by the test target, or by another handler, is handled by the given
+    /// <paramref name="handler"/> instead. This works whether or not a real handler was found, and pipeline behaviours
+    /// still run around it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// If a handler is provided for the same request more than once, the last one is used.
+    /// </para>
+    /// </remarks>
+    /// <param name="builder">The builder the mediator was provided to.</param>
+    /// <param name="handler">The handler to use, for example a substitute.</param>
+    /// <typeparam name="TRequest">The type of the request the handler handles.</typeparam>
+    /// <typeparam name="TResponse">The type of the response produced by handling the request.</typeparam>
+    /// <returns>The builder.</returns>
+    /// <exception cref="InvalidOperationException">If <c>WithMediator</c> has not been called, or the mediator has already handled a request.</exception>
+    public static TestTargetBuilder WithHandler<TRequest, TResponse>(
+        this TestTargetBuilder builder,
+        IRequestHandler<TRequest, TResponse> handler)
+        where TRequest : IRequest<TResponse>
+    {
+        GetConfiguration(builder).WithHandler(handler);
+
+        return builder;
+    }
+
+    /// <summary>
+    /// Replaces the handler for requests of type <typeparamref name="TRequest"/> in the mediator provided with
+    /// <c>WithMediator</c> with a function that produces the response, so the real handler, and everything it depends on,
+    /// is not used. Pipeline behaviours still run around it.
+    /// </summary>
+    /// <param name="builder">The builder the mediator was provided to.</param>
+    /// <param name="response">Produces the response for a request.</param>
+    /// <typeparam name="TRequest">The type of the request to fake the handling of.</typeparam>
+    /// <typeparam name="TResponse">The type of the response produced by handling the request.</typeparam>
+    /// <returns>The builder.</returns>
+    /// <exception cref="InvalidOperationException">If <c>WithMediator</c> has not been called, or the mediator has already handled a request.</exception>
+    public static TestTargetBuilder WithResponse<TRequest, TResponse>(
+        this TestTargetBuilder builder,
+        Func<TRequest, TResponse> response)
+        where TRequest : IRequest<TResponse>
+    {
+        GetConfiguration(builder).WithResponse(response);
+
+        return builder;
+    }
+
+    /// <summary>
+    /// Replaces the handler for requests of type <typeparamref name="TRequest"/> in the mediator provided with
+    /// <c>WithMediator</c> with an asynchronous function that produces the response, so the real handler, and everything
+    /// it depends on, is not used. Pipeline behaviours still run around it.
+    /// </summary>
+    /// <param name="builder">The builder the mediator was provided to.</param>
+    /// <param name="response">Produces the response for a request.</param>
+    /// <typeparam name="TRequest">The type of the request to fake the handling of.</typeparam>
+    /// <typeparam name="TResponse">The type of the response produced by handling the request.</typeparam>
+    /// <returns>The builder.</returns>
+    /// <exception cref="InvalidOperationException">If <c>WithMediator</c> has not been called, or the mediator has already handled a request.</exception>
+    public static TestTargetBuilder WithResponse<TRequest, TResponse>(
+        this TestTargetBuilder builder,
+        Func<TRequest, CancellationToken, Task<TResponse>> response)
+        where TRequest : IRequest<TResponse>
+    {
+        GetConfiguration(builder).WithResponse(response);
+
+        return builder;
+    }
+
     private static MediatorTestConfiguration GetConfiguration(TestTargetBuilder builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
 
         return Configurations.TryGetValue(builder, out var configuration)
             ? configuration
-            : throw new InvalidOperationException("Call WithMediator before adding pipeline behaviors.");
+            : throw new InvalidOperationException(
+                "Call WithMediator before adding pipeline behaviors or providing handlers.");
     }
 
-    private static IMediator CreateMediator(TestTargetBuilder builder, MediatorTestConfiguration configuration)
+    private static HandlerCheckingMediator CreateMediator(TestTargetBuilder builder, MediatorTestConfiguration configuration)
     {
         configuration.IsBuilt = true;
+        configuration.ApplyHandlerOverrides();
 
         var handlers = FindHandlers(configuration.Services);
 #pragma warning disable IDISP001 // The provider only creates the mediator, and lives as long as the builder's services.
         var provider = BuildProvider(builder, configuration, handlers);
 #pragma warning restore IDISP001
 
-        return provider.GetRequiredService<IMediator>();
+        return new HandlerCheckingMediator(
+            provider.GetRequiredService<IMediator>(),
+            [.. handlers.Select(handler => handler.Request)]);
     }
 
     private static List<(Type Request, Type Response)> FindHandlers(IServiceCollection services)
@@ -177,26 +250,38 @@ public static class TestTargetBuilderMediatorExtensions
     {
         IServiceCollection services = new ServiceCollection();
         var supplied = new HashSet<Type>();
+        var context = new DescriptorBuildContext(builder, configuration, handlers, services, supplied);
 
         foreach (var descriptor in configuration.Services)
         {
-            if (descriptor.ImplementationType is null || descriptor.ServiceType == typeof(IMediator))
-            {
-                services.Add(descriptor);
-                continue;
-            }
-
-            foreach (var (serviceType, implementationType) in Close(descriptor, handlers))
-            {
-                services.Add(
-                    new ServiceDescriptor(
-                        serviceType,
-                        _ => BuildWithCollections(builder, implementationType, configuration.HandlerAssemblies, supplied),
-                        descriptor.Lifetime));
-            }
+            AddDescriptor(context, descriptor);
         }
 
         return services.BuildServiceProvider();
+    }
+
+    private static void AddDescriptor(
+        DescriptorBuildContext context,
+        ServiceDescriptor descriptor)
+    {
+        if (descriptor.ImplementationType is null || descriptor.ServiceType == typeof(IMediator))
+        {
+            context.Services.Add(descriptor);
+            return;
+        }
+
+        foreach (var (serviceType, implementationType) in Close(descriptor, context.Handlers))
+        {
+            context.Services.Add(
+                new ServiceDescriptor(
+                    serviceType,
+                    _ => BuildWithCollections(
+                        context.Builder,
+                        implementationType,
+                        context.Configuration.HandlerAssemblies,
+                        context.Supplied),
+                    descriptor.Lifetime));
+        }
     }
 
     private static object BuildWithCollections(

@@ -1,6 +1,6 @@
 using Audacia.Mediator;
 using Audacia.UnitTest.Dependency.Mediator;
-using Audacia.UnitTest.Dependency.Tests.MediatorFixtures;
+using Audacia.UnitTest.Dependency.Tests.MediatorFixtures.Greetings;
 using NSubstitute;
 using Shouldly;
 

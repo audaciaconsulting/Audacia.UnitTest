@@ -28,6 +28,28 @@ Dependencies can be supplied before or after `WithMediator`, and so can pipeline
 created when the first request is sent, so everything must be added before then. `WithMediator` can be called once per
 builder, and accepts several assemblies.
 
+## Handlers that send requests
+
+A handler that takes `IMediator` can send further requests, and each one is handled by its real handler, built with
+whatever you supplied to the builder. To stop a request reaching its real handler, for example because that handler
+saves data or sends an email, fake it:
+
+```csharp
+var mediator = new TestTargetBuilder()
+    .WithMediator(typeof(PlaceOrderHandler).Assembly)
+    .WithResponse<SendReceipt, string>(request => $"fake receipt for {request.Customer}")   // a function
+    .WithHandler(sendEmailHandlerSubstitute)                                                // or a whole handler
+    .Build<IMediator>();
+```
+
+`WithResponse` also accepts an asynchronous function that receives the cancellation token. The real handler for a faked
+request, and everything it depends on, is never built. Pipeline behaviours still run around the fake. If a handler is
+provided for the same request more than once, the last one is used, wherever the real handlers were added.
+
+`WithMediator` does not need any assemblies. With none, only the requests you fake have a handler, and sending any other
+request throws an exception naming it. Collections that behaviours depend on, such as validators, are found in the
+assemblies passed to `WithMediator`, so with none they are empty.
+
 ## Pipeline behaviours
 
 Behaviours run in the order they are added, with the first one added outermost. Add any class implementing

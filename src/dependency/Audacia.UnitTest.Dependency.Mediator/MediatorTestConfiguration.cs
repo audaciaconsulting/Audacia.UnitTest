@@ -10,6 +10,8 @@ namespace Audacia.UnitTest.Dependency.Mediator;
 /// </summary>
 public sealed class MediatorTestConfiguration
 {
+    private readonly Dictionary<Type, object> _handlerOverrides = [];
+
     /// <summary>
     /// Gets the registrations made by the configuration, which the mediator is then built from.
     /// </summary>
@@ -94,6 +96,81 @@ public sealed class MediatorTestConfiguration
             new DelegatePipelineBehavior<TRequest, TResponse>(behavior));
 
         return this;
+    }
+
+    /// <summary>
+    /// Replaces the handler for requests of type <typeparamref name="TRequest"/> with the given
+    /// <paramref name="handler"/>, whether or not a real handler was found. Pipeline behaviours still run around it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// If a handler is provided for the same request more than once, the last one is used, wherever the real handlers were
+    /// added.
+    /// </para>
+    /// </remarks>
+    /// <param name="handler">The handler to use, for example a substitute.</param>
+    /// <typeparam name="TRequest">The type of the request the handler handles.</typeparam>
+    /// <typeparam name="TResponse">The type of the response produced by handling the request.</typeparam>
+    /// <returns>The configuration.</returns>
+    public MediatorTestConfiguration WithHandler<TRequest, TResponse>(IRequestHandler<TRequest, TResponse> handler)
+        where TRequest : IRequest<TResponse>
+    {
+        ArgumentNullException.ThrowIfNull(handler);
+        EnsureNotBuilt();
+
+        _handlerOverrides[typeof(IRequestHandler<TRequest, TResponse>)] = handler;
+
+        return this;
+    }
+
+    /// <summary>
+    /// Replaces the handler for requests of type <typeparamref name="TRequest"/> with a function that produces the
+    /// response, so the real handler, and everything it depends on, is not used.
+    /// </summary>
+    /// <param name="response">Produces the response for a request.</param>
+    /// <typeparam name="TRequest">The type of the request to fake the handling of.</typeparam>
+    /// <typeparam name="TResponse">The type of the response produced by handling the request.</typeparam>
+    /// <returns>The configuration.</returns>
+    public MediatorTestConfiguration WithResponse<TRequest, TResponse>(Func<TRequest, TResponse> response)
+        where TRequest : IRequest<TResponse>
+    {
+        ArgumentNullException.ThrowIfNull(response);
+
+        return WithResponse<TRequest, TResponse>((request, _) => Task.FromResult(response(request)));
+    }
+
+    /// <summary>
+    /// Replaces the handler for requests of type <typeparamref name="TRequest"/> with an asynchronous function that
+    /// produces the response, so the real handler, and everything it depends on, is not used.
+    /// </summary>
+    /// <param name="response">Produces the response for a request.</param>
+    /// <typeparam name="TRequest">The type of the request to fake the handling of.</typeparam>
+    /// <typeparam name="TResponse">The type of the response produced by handling the request.</typeparam>
+    /// <returns>The configuration.</returns>
+    public MediatorTestConfiguration WithResponse<TRequest, TResponse>(
+        Func<TRequest, CancellationToken, Task<TResponse>> response)
+        where TRequest : IRequest<TResponse>
+    {
+        ArgumentNullException.ThrowIfNull(response);
+
+        return WithHandler(new DelegateRequestHandler<TRequest, TResponse>(response));
+    }
+
+    /// <summary>
+    /// Replaces the registered handlers with any that were provided to stand in for them. This is done when the mediator
+    /// is created, so the result does not depend on the order things were added in.
+    /// </summary>
+    internal void ApplyHandlerOverrides()
+    {
+        foreach (var (serviceType, handler) in _handlerOverrides)
+        {
+            foreach (var registered in Services.Where(descriptor => descriptor.ServiceType == serviceType).ToList())
+            {
+                Services.Remove(registered);
+            }
+
+            Services.AddSingleton(serviceType, handler);
+        }
     }
 
     private void EnsureNotBuilt()

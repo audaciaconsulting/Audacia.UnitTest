@@ -2,6 +2,8 @@ using Audacia.Mediator;
 using Audacia.UnitTest.Dependency.Exceptions;
 using Audacia.UnitTest.Dependency.Mediator;
 using Audacia.UnitTest.Dependency.Tests.MediatorFixtures;
+using Audacia.UnitTest.Dependency.Tests.MediatorFixtures.Abstractions;
+using Audacia.UnitTest.Dependency.Tests.MediatorFixtures.Greetings;
 using Shouldly;
 
 namespace Audacia.UnitTest.Dependency.Tests;
