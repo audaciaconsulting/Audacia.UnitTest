@@ -1,7 +1,7 @@
 using Audacia.Mediator;
-using Audacia.UnitTest.Dependency.Tests.MediatorFixtures.Abstractions;
+using Audacia.UnitTest.Dependency.Tests.Mediator.Fixtures.Abstractions;
 
-namespace Audacia.UnitTest.Dependency.Tests.MediatorFixtures;
+namespace Audacia.UnitTest.Dependency.Tests.Mediator.Fixtures;
 
 /// <summary>
 /// Short-circuits with the validation problems. Only applies to class responses, so it cannot apply to

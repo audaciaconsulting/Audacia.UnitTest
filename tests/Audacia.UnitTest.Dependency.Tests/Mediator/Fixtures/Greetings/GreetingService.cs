@@ -1,6 +1,6 @@
 using Audacia.Mediator;
 
-namespace Audacia.UnitTest.Dependency.Tests.MediatorFixtures.Greetings;
+namespace Audacia.UnitTest.Dependency.Tests.Mediator.Fixtures.Greetings;
 
 public sealed class GreetingService(IMediator mediator)
 {

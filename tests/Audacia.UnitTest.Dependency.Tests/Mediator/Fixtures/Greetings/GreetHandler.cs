@@ -1,7 +1,7 @@
 using Audacia.Mediator;
-using Audacia.UnitTest.Dependency.Tests.MediatorFixtures.Abstractions;
+using Audacia.UnitTest.Dependency.Tests.Mediator.Fixtures.Abstractions;
 
-namespace Audacia.UnitTest.Dependency.Tests.MediatorFixtures.Greetings;
+namespace Audacia.UnitTest.Dependency.Tests.Mediator.Fixtures.Greetings;
 
 public sealed class GreetHandler(IGreetingFormatter formatter) : IRequestHandler<Greet, string>
 {

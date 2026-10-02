@@ -1,6 +1,6 @@
 using Audacia.Mediator;
 
-namespace Audacia.UnitTest.Dependency.Tests.MediatorFixtures;
+namespace Audacia.UnitTest.Dependency.Tests.Mediator.Fixtures;
 
 public sealed class CountLettersHandler : IRequestHandler<CountLetters, int>
 {

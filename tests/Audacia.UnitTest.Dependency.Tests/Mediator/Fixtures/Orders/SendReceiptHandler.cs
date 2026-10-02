@@ -1,7 +1,7 @@
 using Audacia.Mediator;
-using Audacia.UnitTest.Dependency.Tests.MediatorFixtures.Abstractions;
+using Audacia.UnitTest.Dependency.Tests.Mediator.Fixtures.Abstractions;
 
-namespace Audacia.UnitTest.Dependency.Tests.MediatorFixtures.Orders;
+namespace Audacia.UnitTest.Dependency.Tests.Mediator.Fixtures.Orders;
 
 public sealed class SendReceiptHandler(IReceiptSender sender) : IRequestHandler<SendReceipt, string>
 {

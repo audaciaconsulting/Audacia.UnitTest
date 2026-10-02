@@ -1,12 +1,12 @@
 using Audacia.Mediator;
 using Audacia.UnitTest.Dependency.Exceptions;
 using Audacia.UnitTest.Dependency.Mediator;
-using Audacia.UnitTest.Dependency.Tests.MediatorFixtures;
-using Audacia.UnitTest.Dependency.Tests.MediatorFixtures.Abstractions;
-using Audacia.UnitTest.Dependency.Tests.MediatorFixtures.Greetings;
+using Audacia.UnitTest.Dependency.Tests.Mediator.Fixtures;
+using Audacia.UnitTest.Dependency.Tests.Mediator.Fixtures.Abstractions;
+using Audacia.UnitTest.Dependency.Tests.Mediator.Fixtures.Greetings;
 using Shouldly;
 
-namespace Audacia.UnitTest.Dependency.Tests;
+namespace Audacia.UnitTest.Dependency.Tests.Mediator;
 
 /// <summary>
 /// Covers <c>Audacia.UnitTest.Dependency.Mediator</c>, so requests sent through the mediator reach handlers,
@@ -266,7 +266,7 @@ public class MediatorTests
         var builder = new TestTargetBuilder().WithMediator(TestAssembly);
 
         // Act
-        var add = () => builder.AddPipelineBehavior(typeof(GreetHandler));
+        var add = () => builder.AddPipelineBehavior<GreetHandler>();
 
         // Assert
         add.ShouldThrow<ArgumentException>();
@@ -308,8 +308,10 @@ public class MediatorTests
         var builder = new TestTargetBuilder()
             .WithMediator(TestAssembly)
             .AddPipelineBehavior(typeof(ValidatesBehavior<,>));
-        builder.With<IGreetingFormatter>(new UpperCaseGreetingFormatter());
-        builder.With<IBannedNames>(new FixedBannedNames("eve"));
+
+        builder
+            .With<IGreetingFormatter>(new UpperCaseGreetingFormatter())
+            .With<IBannedNames>(new FixedBannedNames("eve"));
 
         // Act
         var result = await builder.Build<GreetingService>().GreetAsync("eve");
@@ -421,7 +423,7 @@ public class MediatorTests
         var builder = new TestTargetBuilder();
 
         // Act
-        var configure = () => builder.WithMediator(mediator => mediator.AddPipelineBehavior(typeof(GreetHandler)));
+        var configure = () => builder.WithMediator(mediator => mediator.AddPipelineBehavior<GreetHandler>());
 
         // Assert
         configure.ShouldThrow<ArgumentException>();

@@ -1,6 +1,6 @@
-using Audacia.UnitTest.Dependency.Tests.MediatorFixtures.Abstractions;
+using Audacia.UnitTest.Dependency.Tests.Mediator.Fixtures.Abstractions;
 
-namespace Audacia.UnitTest.Dependency.Tests.MediatorFixtures;
+namespace Audacia.UnitTest.Dependency.Tests.Mediator.Fixtures;
 
 /// <summary>
 /// Stands for a dependency with a side effect that a test does not want to run.

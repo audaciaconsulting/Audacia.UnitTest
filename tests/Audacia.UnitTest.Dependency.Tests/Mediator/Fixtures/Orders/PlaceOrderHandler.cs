@@ -1,6 +1,6 @@
 using Audacia.Mediator;
 
-namespace Audacia.UnitTest.Dependency.Tests.MediatorFixtures.Orders;
+namespace Audacia.UnitTest.Dependency.Tests.Mediator.Fixtures.Orders;
 
 /// <summary>
 /// A handler that sends another request, so tests can fake or use the real handler for the request it sends.

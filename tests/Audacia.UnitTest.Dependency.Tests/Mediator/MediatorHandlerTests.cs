@@ -1,13 +1,13 @@
 using Audacia.Mediator;
 using Audacia.UnitTest.Dependency.Mediator;
-using Audacia.UnitTest.Dependency.Tests.MediatorFixtures;
-using Audacia.UnitTest.Dependency.Tests.MediatorFixtures.Abstractions;
-using Audacia.UnitTest.Dependency.Tests.MediatorFixtures.Greetings;
-using Audacia.UnitTest.Dependency.Tests.MediatorFixtures.Orders;
+using Audacia.UnitTest.Dependency.Tests.Mediator.Fixtures;
+using Audacia.UnitTest.Dependency.Tests.Mediator.Fixtures.Abstractions;
+using Audacia.UnitTest.Dependency.Tests.Mediator.Fixtures.Greetings;
+using Audacia.UnitTest.Dependency.Tests.Mediator.Fixtures.Orders;
 using NSubstitute;
 using Shouldly;
 
-namespace Audacia.UnitTest.Dependency.Tests;
+namespace Audacia.UnitTest.Dependency.Tests.Mediator;
 
 /// <summary>
 /// Covers requests sent by handlers, and faking the handling of a request with <c>WithHandler</c> and

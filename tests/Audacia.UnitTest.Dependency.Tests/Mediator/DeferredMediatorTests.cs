@@ -1,10 +1,10 @@
 using Audacia.Mediator;
 using Audacia.UnitTest.Dependency.Mediator;
-using Audacia.UnitTest.Dependency.Tests.MediatorFixtures.Greetings;
+using Audacia.UnitTest.Dependency.Tests.Mediator.Fixtures.Greetings;
 using NSubstitute;
 using Shouldly;
 
-namespace Audacia.UnitTest.Dependency.Tests;
+namespace Audacia.UnitTest.Dependency.Tests.Mediator;
 
 /// <summary>
 /// Covers <see cref="DeferredMediator"/>, to ensure that the real mediator is created lazily and only once.

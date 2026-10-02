@@ -1,6 +1,6 @@
-using Audacia.UnitTest.Dependency.Tests.MediatorFixtures.Abstractions;
+using Audacia.UnitTest.Dependency.Tests.Mediator.Fixtures.Abstractions;
 
-namespace Audacia.UnitTest.Dependency.Tests.MediatorFixtures.Greetings;
+namespace Audacia.UnitTest.Dependency.Tests.Mediator.Fixtures.Greetings;
 
 public sealed class GreetNameIsNotBlank : IValidates<Greet>
 {

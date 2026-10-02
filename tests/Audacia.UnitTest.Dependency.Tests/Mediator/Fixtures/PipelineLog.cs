@@ -1,4 +1,4 @@
-namespace Audacia.UnitTest.Dependency.Tests.MediatorFixtures;
+namespace Audacia.UnitTest.Dependency.Tests.Mediator.Fixtures;
 
 /// <summary>
 /// Records what ran in the pipeline, so a test can check how many times each step ran.

@@ -1,6 +1,6 @@
 using Audacia.Mediator;
 
-namespace Audacia.UnitTest.Dependency.Tests.MediatorFixtures;
+namespace Audacia.UnitTest.Dependency.Tests.Mediator.Fixtures;
 
 /// <summary>
 /// Records the name of each request it runs around, and applies to every request.
