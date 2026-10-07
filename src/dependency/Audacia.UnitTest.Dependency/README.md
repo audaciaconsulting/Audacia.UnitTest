@@ -57,8 +57,8 @@ var target = new TestTargetBuilder()
     .Build<AddPersonCommandHandler>();
 ```
 
-Pass the substitute itself, not a mock wrapper around it. Passing a Moq `Mock<T>`, or a blueprint that belongs in
-`WithBlueprint`, throws with an explanation rather than failing later.
+If using a substitute, pass in the substitute itself, not a wrapper around it. Passing in a `Mock<T>`, or a blueprint that belongs in
+`WithBlueprint`, throws an error with an explanation (rather than failing later).
 
 `With` isn't limited to substitutes — any manually constructed instance works, including a plain real object with
 specific state, which keeps a test using a genuine dependency instead of a fake one:
@@ -103,7 +103,12 @@ entry is used.
 
 ## Blueprints
 
-A blueprint describes how to build one dependency, so the same setup can be shared across tests instead of repeated.
+A blueprint creates one reusable dependency that allows the same setup to be shared across tests, instead of repeated. This handles 
+dependencies 'on the edge of' your application, e.g. where it interacts with third parties, a database or Azure resources. 
+
+Some packages are included in this solution - e.g. for Azure and HTTP - but you may need to add your own, for example a finance system 
+for posting invoices, government API for bank holidays, or communication provider for sending email or SMS messages.
+
 Implement `IBlueprintDependency<TDependency>` directly, or derive from `BlueprintDependency<TDependency>` instead
 when the blueprint has no base class of its own (see [Customised blueprints for substitutes](#customised-blueprints-for-substitutes)):
 
