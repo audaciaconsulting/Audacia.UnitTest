@@ -14,6 +14,7 @@
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
       <PackageReference Include="Audacia.Commands" Version="1.1.3" />
+      <PackageReference Include="Audacia.Core" Version="3.0.0" /> <!--Required to avoid a version issue with the version resolved by Audacia.Commands --> 
       <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.12" />
       <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.12" />
       <PackageReference Include="NSubstitute" Version="6.2.0" />
