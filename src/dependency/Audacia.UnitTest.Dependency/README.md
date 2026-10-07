@@ -113,31 +113,31 @@ Implement `IBlueprintDependency<TDependency>` directly, or derive from `Blueprin
 when the blueprint has no base class of its own (see [Customised blueprints for substitutes](#customised-blueprints-for-substitutes)):
 
 ```csharp
-public sealed class ReportFormatterBlueprint : IBlueprintDependency<IReportFormatter>
+public sealed class PayrollApiBlueprint : IBlueprintDependency<IPayrollApi>
 {
-    public IReportFormatter Build()
+    public IPayrollApi Build()
     {
-        return new ReportFormatter();
+        return new PayrollApiClient();
     }
 }
 ```
 
-`ReportFormatter` is `internal`, so the builder cannot find it by scanning for exported implementations — without a
-blueprint, `IReportFormatter` could not be resolved at all. Blueprints are discovered automatically, so the one
-above is used for any `IReportFormatter` in the graph without being registered:
+`PayrollApiClient` is `internal`, so the builder cannot find it by scanning for exported implementations — without a
+blueprint, `IPayrollApi` could not be resolved at all. Blueprints are discovered automatically, so the one
+above is used for any `IPayrollApi` in the graph without being registered:
 
 ```csharp
-var target = new TestTargetBuilder().Build<ReportGenerator>();
+var target = new TestTargetBuilder().Build<SalaryPaymentGenerator>();
 
-var report = target.Generate("value"); // "blueprint:value"
+var payment = target.Generate("value"); // "blueprint:value"
 ```
 
 To use a specific instance for a single test instead of the discovered blueprint, pass it in:
 
 ```csharp
 var target = new TestTargetBuilder()
-    .WithBlueprint(new ReportFormatterBlueprint())
-    .Build<ReportGenerator>();
+    .WithBlueprint(new PayrollApiBlueprint())
+    .Build<SalaryPaymentGenerator>();
 ```
 
 ### Where blueprints are looked for
