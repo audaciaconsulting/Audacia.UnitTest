@@ -10,6 +10,8 @@ namespace Audacia.UnitTest.Dependency.Mediator;
 /// </summary>
 public sealed class MediatorTestConfiguration
 {
+    private const int BehaviorParameterCount = 2;
+
     private readonly Dictionary<Type, object> _handlerOverrides = [];
 
     /// <summary>
@@ -55,10 +57,15 @@ public sealed class MediatorTestConfiguration
     /// behaviour must take the request type and then the response type as its type parameters.
     /// </param>
     /// <returns>The configuration.</returns>
-    /// <exception cref="ArgumentException">If <paramref name="behaviorType"/> is not a pipeline behaviour.</exception>
+    /// <exception cref="ArgumentException">
+    /// If <paramref name="behaviorType"/> is not a pipeline behaviour, or is an open generic that does not take exactly
+    /// the request type and then the response type as its type parameters.
+    /// </exception>
     public MediatorTestConfiguration AddPipelineBehavior(Type behaviorType)
     {
         EnsureNotBuilt();
+        ArgumentNullException.ThrowIfNull(behaviorType);
+        EnsureOpenGenericShape(behaviorType);
         Services.AddPipelineBehavior(behaviorType);
 
         return this;
@@ -170,6 +177,37 @@ public sealed class MediatorTestConfiguration
             }
 
             Services.AddSingleton(serviceType, handler);
+        }
+    }
+
+    /// <summary>
+    /// An open generic behaviour is closed over each request and response that has a handler, so it must be shaped
+    /// <c>Behavior&lt;TRequest, TResponse&gt;</c>. Anything else cannot be closed, and is rejected here rather than
+    /// silently left out of the pipeline. A type that is not a behaviour at all is left for the registration to reject.
+    /// </summary>
+    /// <exception cref="ArgumentException">If the open generic behaviour cannot be closed over a request and response.</exception>
+    private static void EnsureOpenGenericShape(Type behaviorType)
+    {
+        if (!behaviorType.IsGenericTypeDefinition)
+        {
+            return;
+        }
+
+        var behaviorInterface = behaviorType.GetInterfaces()
+            .FirstOrDefault(type => type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IPipelineBehavior<,>));
+        if (behaviorInterface is null)
+        {
+            return;
+        }
+
+        var parameters = behaviorType.GetGenericArguments();
+        var arguments = behaviorInterface.GetGenericArguments();
+        if (parameters.Length != BehaviorParameterCount || arguments[0] != parameters[0] || arguments[1] != parameters[1])
+        {
+            throw new ArgumentException(
+                $"The open generic behaviour {behaviorType} must take exactly the request type and then the response type "
+                + "as its type parameters, for example ValidationBehavior<TRequest, TResponse>.",
+                nameof(behaviorType));
         }
     }
 

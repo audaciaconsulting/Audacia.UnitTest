@@ -89,7 +89,10 @@ public static class TestTargetBuilderMediatorExtensions
     /// </param>
     /// <returns>The builder.</returns>
     /// <exception cref="InvalidOperationException">If <c>WithMediator</c> has not been called, or the mediator has already handled a request.</exception>
-    /// <exception cref="ArgumentException">If <paramref name="behaviorType"/> is not a pipeline behaviour.</exception>
+    /// <exception cref="ArgumentException">
+    /// If <paramref name="behaviorType"/> is not a pipeline behaviour, or is an open generic that does not take exactly
+    /// the request type and then the response type as its type parameters.
+    /// </exception>
     public static TestTargetBuilder AddPipelineBehavior(this TestTargetBuilder builder, Type behaviorType)
     {
         GetConfiguration(builder).AddPipelineBehavior(behaviorType);
@@ -290,9 +293,14 @@ public static class TestTargetBuilderMediatorExtensions
         List<Assembly> assemblies,
         HashSet<Type> supplied)
     {
-        SupplyCollectionDependencies(builder, implementationType, assemblies, supplied);
+        // The builder is not thread-safe, and requests can be sent at the same time, so everything that touches it
+        // happens under one gate.
+        lock (supplied)
+        {
+            SupplyCollectionDependencies(builder, implementationType, assemblies, supplied);
 
-        return builder.Build(implementationType);
+            return builder.Build(implementationType);
+        }
     }
 
     private static List<(Type ServiceType, Type ImplementationType)> Close(
@@ -315,7 +323,8 @@ public static class TestTargetBuilderMediatorExtensions
             }
             catch (ArgumentException)
             {
-                // The behaviour's constraints rule out this request, so it does not apply to it.
+                // The behaviour's constraints rule out this request, so it does not apply to it. Its shape was
+                // checked when it was added, so this is the only reason closing it can fail.
             }
         }
 
@@ -352,13 +361,16 @@ public static class TestTargetBuilderMediatorExtensions
             {
                 if (supplied.Add(itemType))
                 {
-                    supply.MakeGenericMethod(itemType).Invoke(null, [builder, assemblies]);
+                    supply.MakeGenericMethod(itemType).Invoke(null, [builder, assemblies, supplied]);
                 }
             }
         }
     }
 
-    private static void SupplyImplementationsOf<TService>(TestTargetBuilder builder, List<Assembly> assemblies)
+    private static void SupplyImplementationsOf<TService>(
+        TestTargetBuilder builder,
+        List<Assembly> assemblies,
+        HashSet<Type> supplied)
     {
         var implementations = assemblies
             .Distinct()
@@ -371,6 +383,7 @@ public static class TestTargetBuilderMediatorExtensions
         {
             builder.With<IEnumerable<TService>>(
                 new LazyEnumerable<TService>(
+                    supplied,
                     () => [.. implementations.Select(implementation => (TService)builder.Build(implementation))]));
         }
         catch (TestTargetBuilderException)

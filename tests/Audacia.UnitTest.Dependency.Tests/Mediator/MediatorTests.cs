@@ -441,4 +441,44 @@ public class MediatorTests
         // Assert
         addAgain.ShouldThrow<TestTargetBuilderException>();
     }
+
+    [Fact]
+    public void Should_reject_an_open_generic_behaviour_with_more_than_a_request_and_response_parameter()
+    {
+        // Arrange
+        var builder = new TestTargetBuilder().WithMediator(TestAssembly);
+
+        // Act
+        var add = () => builder.AddPipelineBehavior(typeof(ThreeParameterBehavior<,,>));
+
+        // Assert
+        add.ShouldThrow<ArgumentException>();
+    }
+
+    [Fact]
+    public void Should_reject_an_open_generic_behaviour_that_takes_the_response_before_the_request()
+    {
+        // Arrange
+        var builder = new TestTargetBuilder().WithMediator(TestAssembly);
+
+        // Act
+        var add = () => builder.AddPipelineBehavior(typeof(SwappedParameterBehavior<,>));
+
+        // Assert
+        add.ShouldThrow<ArgumentException>();
+    }
+
+    [Fact]
+    public void Should_reject_an_open_generic_behaviour_added_in_the_configuration_with_the_wrong_shape()
+    {
+        // Arrange
+        var builder = new TestTargetBuilder();
+
+        // Act
+        var configure = () => builder.WithMediator(
+            mediator => mediator.AddPipelineBehavior(typeof(ThreeParameterBehavior<,,>)));
+
+        // Assert
+        configure.ShouldThrow<ArgumentException>();
+    }
 }

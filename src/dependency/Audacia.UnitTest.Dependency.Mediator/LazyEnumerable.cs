@@ -7,15 +7,24 @@ namespace Audacia.UnitTest.Dependency.Mediator;
 /// configuring the mediator is still used by the items.
 /// </summary>
 /// <typeparam name="T">The type of the items.</typeparam>
+/// <param name="gate">
+/// Held while the items are created. It is taken before anything else, so it can be shared with other code that uses the
+/// <see cref="TestTargetBuilder"/> without the two waiting on each other.
+/// </param>
 /// <param name="create">Creates the items.</param>
-internal sealed class LazyEnumerable<T>(Func<IReadOnlyList<T>> create) : IEnumerable<T>
+internal sealed class LazyEnumerable<T>(object gate, Func<IReadOnlyList<T>> create) : IEnumerable<T>
 {
-    private readonly Lazy<IReadOnlyList<T>> _items = new(create);
+    private IReadOnlyList<T>? _items;
 
     /// <inheritdoc/>
     public IEnumerator<T> GetEnumerator()
     {
-        return _items.Value.GetEnumerator();
+        lock (gate)
+        {
+            _items ??= create();
+
+            return _items.GetEnumerator();
+        }
     }
 
     /// <inheritdoc/>
