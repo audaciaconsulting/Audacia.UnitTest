@@ -321,3 +321,19 @@ var target = new TestTargetBuilder()
     .WithBlueprint(new AzureClientFactoryServiceBusBlueprint())
     .Build<OrderPlacedPublisher>();
 ```
+
+## Using the mediator pipeline
+
+To use the real `IMediator` pipeline in a test with real or fake handlers, validators etc., install
+[`Audacia.UnitTest.Dependency.Mediator`](../Audacia.UnitTest.Dependency.Mediator/README.md).
+
+The builder finds your handlers automatically, and can register pipeline behaviours for validators etc., so a target that sends
+a request through `IMediator` receives the real pipeline with all its collaborators, without needing to register them:
+
+```csharp
+.WithMediator(typeof(CreateOrderHandler).Assembly)
+.AddPipelineBehavior(typeof(ValidationBehavior<,>))
+```
+
+Additionally `WithResponse` and `WithHandler` let you fake a request that would otherwise reach its real handler, so a test can
+assert on the request sent but avoid executing the real handler, e.g. if that would have side effects.

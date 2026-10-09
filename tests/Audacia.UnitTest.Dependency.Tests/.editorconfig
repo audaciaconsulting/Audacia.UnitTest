@@ -9,7 +9,7 @@
 # Methods should not exceed a predefined number of statements.
 dotnet_diagnostic.ACL1002.max_statement_count = 20 # Increase max count for tests, as they may contain complex setup
 
-# A property, method or local function should do only one thing *** Suppress as test methods may contain 'And' to make them more descriptive ***
+# A property, method or local function should do only one thing *** Suppressed as test methods may contain 'And' to make them more descriptive ***
 dotnet_diagnostic.AV1115.severity = none
 
 # Don't repeat the name of a class or enumeration in its members *** Suppressed as test methods often contain the parent type in their name ***
@@ -27,5 +27,11 @@ dotnet_diagnostic.CA1506.severity = none
 # [DESIGN] Identifiers should not contain underscores
 dotnet_diagnostic.CA1707.severity = none
 
-# [NAMING] Asynchronous method name should end with 'Async' ** Suppress as we don't want to suffix test methods ***
+# [NAMING] Asynchronous method name should end with 'Async' *** Suppressed as we don't want to suffix test methods ***
 dotnet_diagnostic.RCS1046.severity = none
+
+# [MAINTAINABILITY] Write code that is easy to debug *** Suppressed as test methods may contain multiple assertions and setup code, which is acceptable in the context of a test ***
+dotnet_diagnostic.AV1580.severity = none
+
+# [STYLE] Remove unnecessary expression value *** Suppressed as this is applied even when running a method that we don't need the output from ***
+dotnet_diagnostic.IDE0058.severity = none
