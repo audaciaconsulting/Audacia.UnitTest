@@ -22,17 +22,17 @@ stages:
   jobs:
   - template: src/build/dotnet/jobs/signed-nuget-package.job.yaml@templates
     parameters:
+      packageSource: public
+      dotNetVersion: '10.x'
       trustedSigningEndpoint: $(TrustedSigningEndpoint)
       trustedSigningAccount: $(TrustedSigningAccount)
       trustedSigningCertificateProfile: $(TrustedSigningCertificateProfile)
-      serviceConnection: 'Audacia Code Signing'
       directory: $(Build.SourcesDirectory)/src/dependency
       fileToSignPattern: 'Audacia.UnitTest.Dependency*.dll'
+      serviceConnection: 'Audacia Code Signing'
       projects: 'src/**/*.csproj'
       workingDirectory: 'src/dependency'
       excludePaths: '*.Test*.csproj'
-      packageSource: 'internalPublic'
-      dotNetVersion: '10.0.x'
 
 - stage: Stage_Release
   displayName: Release
@@ -44,4 +44,4 @@ stages:
       eq(dependencies.Stage_Build.outputs['Job_Build.UpdateVersions.ShouldPublish'], true)
     )
   jobs:
-    - template: src/deployment/nuget/jobs/internal-public-nuget-package.job.yaml@templates
+  - template: src/deployment/nuget/jobs/public-nuget-package.job.yaml@templates
