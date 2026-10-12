@@ -1,6 +1,5 @@
 ﻿using System.Text;
 using System.Text.Json;
-using Audacia.Commands;
 using Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.Asset.Validate;
 using Microsoft.Extensions.Logging;
 
@@ -33,7 +32,7 @@ public class AddAssetCommandHandler(
         var validationResult = await validateAssetCommandHandler.HandleAsync(validateAssetCommand, cancellationToken);
 
         return !validationResult.IsSuccess
-            ? CommandResult.FromExistingResult<AddAssetCommandResultDto>(validationResult)
+            ? CommandResult.Failure<AddAssetCommandResultDto>(validationResult.Errors)
             : await AddAssetAsync(command, validationResult, cancellationToken);
     }
 

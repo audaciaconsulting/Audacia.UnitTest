@@ -1,5 +1,4 @@
-﻿using Audacia.Commands;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 
 namespace Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.People.Validate;
 

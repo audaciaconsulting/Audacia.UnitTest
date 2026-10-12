@@ -1,5 +1,4 @@
-﻿using Audacia.Commands;
-using Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.Job.Validate;
+﻿using Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.Job.Validate;
 using Microsoft.Extensions.Logging;
 
 namespace Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.Job.Add;
@@ -30,7 +29,7 @@ public class AddJobCommandHandler(
 
         if (!validationResult.IsSuccess)
         {
-            return CommandResult.FromExistingResult<AddJobCommandResultDto>(validationResult);
+            return CommandResult.Failure<AddJobCommandResultDto>(validationResult.Errors);
         }
 
         var result = new AddJobCommandResultDto(validationResult);

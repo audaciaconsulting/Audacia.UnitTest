@@ -1,5 +1,4 @@
-﻿using Audacia.Commands;
-using Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.People.Validate;
+﻿using Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.People.Validate;
 using Microsoft.Extensions.Logging;
 
 namespace Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.People.Add;
@@ -30,7 +29,7 @@ public class AddPersonCommandHandler(
 
         if (!validationResult.IsSuccess)
         {
-            return CommandResult.FromExistingResult<AddPersonCommandResultDto>(validationResult);
+            return CommandResult.Failure<AddPersonCommandResultDto>(validationResult.Errors);
         }
 
         var result = new AddPersonCommandResultDto(validationResult);

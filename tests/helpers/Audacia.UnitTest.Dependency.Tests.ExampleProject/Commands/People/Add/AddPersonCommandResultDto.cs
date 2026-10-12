@@ -1,6 +1,4 @@
-﻿using Audacia.Commands;
-
-namespace Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.People.Add;
+﻿namespace Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.People.Add;
 
 /// <summary>
 ///
