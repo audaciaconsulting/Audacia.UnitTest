@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<Version>1.0.0</Version>
+		<PackageId>Audacia.UnitTest.Dependency.Mediator</PackageId>
+		<Authors>Audacia</Authors>
+		<PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+		<Description>A helper library for testing code that uses Audacia.Mediator. Install this NuGet package to send requests through the real mediator pipeline, with handlers and behaviours built by the TestTargetBuilder.</Description>
+		<Copyright>Copyright © Audacia $([System.DateTime]::Now.Year)</Copyright>
+		<PackageTags>Audacia.UnitTest.Dependency.Mediator, unittest, mediator</PackageTags>
+		<PackageIcon>package-icon.png</PackageIcon>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="..\..\..\package-icon.png" Pack="true" PackagePath="\" />
+		<None Include="README.md" Pack="true" PackagePath="\" />
+		<None Include="..\..\..\LICENSE.txt" Pack="true" PackagePath="\" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Audacia.CodeAnalysis" Version="2.1.0">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Audacia.Mediator" Version="1.0.0" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<InternalsVisibleTo Include="Audacia.UnitTest.Dependency.Tests" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Audacia.UnitTest.Dependency\Audacia.UnitTest.Dependency.csproj" />
+	</ItemGroup>
+
+</Project>

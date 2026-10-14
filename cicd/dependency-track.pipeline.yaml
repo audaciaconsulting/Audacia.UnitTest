@@ -37,7 +37,9 @@ variables:
   - name: audaciaUnitTestProjectPaths
     value: |
       $(System.DefaultWorkingDirectory)/src/dependency/Audacia.UnitTest.Dependency/Audacia.UnitTest.Dependency.csproj
+      $(System.DefaultWorkingDirectory)/src/dependency/Audacia.UnitTest.Dependency.Azure/Audacia.UnitTest.Dependency.Azure.csproj
       $(System.DefaultWorkingDirectory)/src/dependency/Audacia.UnitTest.Dependency.Http/Audacia.UnitTest.Dependency.Http.csproj
+      $(System.DefaultWorkingDirectory)/src/dependency/Audacia.UnitTest.Dependency.Mediator/Audacia.UnitTest.Dependency.Mediator.csproj
       $(System.DefaultWorkingDirectory)/tests/Audacia.UnitTest.Dependency.Tests/Audacia.UnitTest.Dependency.Tests.csproj
       $(System.DefaultWorkingDirectory)/tests/helpers/Audacia.UnitTest.Dependency.Tests.ExampleProject/Audacia.UnitTest.Dependency.Tests.ExampleProject.csproj
 
