@@ -1,0 +1,21 @@
+<Project>
+    <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+    <!-- Shared version for all packages in this folder. Record each release in CHANGELOG.md alongside this file. -->
+    <PropertyGroup>
+        <Version>1.0.2</Version>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <Authors>Audacia</Authors>
+        <Copyright>Copyright © Audacia $([System.DateTime]::Now.Year)</Copyright>
+        <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+        <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+        <PackageIcon>package-icon.png</PackageIcon>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="$(MSBuildThisFileDirectory)..\..\package-icon.png" Pack="true" PackagePath="\" />
+        <None Include="$(MSBuildThisFileDirectory)..\..\LICENSE.txt" Pack="true" PackagePath="\" />
+    </ItemGroup>
+</Project>
