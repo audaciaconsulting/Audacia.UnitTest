@@ -2,7 +2,7 @@
 using Audacia.UnitTest.Dependency.Exceptions;
 using Audacia.UnitTest.Dependency.Http.Blueprints;
 using Audacia.UnitTest.Dependency.Http.Builders;
-using Audacia.UnitTest.Dependency.Tests.ExampleProject;
+using Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands;
 using Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.Asset.Add;
 using Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.Asset.Validate;
 using Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.Job.Add;

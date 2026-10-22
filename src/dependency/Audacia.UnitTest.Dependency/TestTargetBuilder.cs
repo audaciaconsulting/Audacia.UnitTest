@@ -449,7 +449,7 @@ public class TestTargetBuilder
     /// </summary>
     private IReadOnlyCollection<Type> GetAllTypesInProjectScope(Type typeToResolve)
     {
-        // e.g. get "Audacia" from "Audacia.Mediators" so we only load "Audacia" assemblies.
+        // e.g. get "Audacia" from "Audacia.Mediator" so we only load "Audacia" assemblies.
         var startingProjectNamespace = typeToResolve.GetProjectStartName();
         var executingAssembly = EntryPointAssembly.Load();
 

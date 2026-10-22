@@ -13,7 +13,7 @@ internal static class TypeExtensions
     /// Gets the start of the project name for the given <paramref name="type"/>.
     /// </summary>
     /// <param name="type">The type to resolve the project name from.</param>
-    /// <returns>The start of the project name, for example 'Audacia' from 'Audacia.Mediators'.</returns>
+    /// <returns>The start of the project name, for example 'Audacia' from 'Audacia.Mediator'.</returns>
     internal static string GetProjectStartName(this Type type)
     {
         return type.Assembly.FullName!.Split('.').First();

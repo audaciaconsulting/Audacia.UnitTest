@@ -1,6 +1,6 @@
 ﻿using Audacia.Mediator;
 
-namespace Audacia.UnitTest.Dependency.Tests.ExampleProject;
+namespace Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands;
 
 /// <summary>
 /// Represents a basic result of handling an <see cref="IRequest{TResponse}"/>, to avoid adding any dependencies.
