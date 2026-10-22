@@ -3,5 +3,5 @@
 /// <summary>
 ///
 /// </summary>
-/// <param name="ValidatePersonResult"></param>
-public record AddJobCommandResultDto(CommandResult ValidatePersonResult);
+/// <param name="ValidateJobResult"></param>
+public record AddJobCommandResultDto(CommandResult ValidateJobResult);

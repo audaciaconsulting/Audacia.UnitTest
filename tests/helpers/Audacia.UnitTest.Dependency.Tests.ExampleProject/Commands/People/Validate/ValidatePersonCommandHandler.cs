@@ -1,17 +1,19 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Audacia.Mediator;
+using Microsoft.Extensions.Logging;
 
 namespace Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.People.Validate;
 
 /// <summary>
-/// Validates a person that has being request to be added or updated.
+/// Validates a person that has been requested to be added or updated.
 /// </summary>
 /// <param name="logger"></param>
-public class ValidatePersonCommandHandler(ILogger<ValidatePersonCommandHandler> logger) : IValidatePersonCommandHandler
+public class ValidatePersonCommandHandler(ILogger<ValidatePersonCommandHandler> logger)
+    : IRequestHandler<ValidatePersonCommand, CommandResult>
 {
     private const int MaxPersonNameLength = 25;
 
     /// <summary>
-    /// Validate a person that has being requested to be added or updated.
+    /// Validate a person that has been requested to be added or updated.
     /// </summary>
     /// <param name="command"></param>
     /// <param name="cancellationToken"></param>

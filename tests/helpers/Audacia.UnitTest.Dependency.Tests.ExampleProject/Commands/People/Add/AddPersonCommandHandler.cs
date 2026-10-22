@@ -1,4 +1,5 @@
-﻿using Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.People.Validate;
+﻿using Audacia.Mediator;
+using Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.People.Validate;
 using Microsoft.Extensions.Logging;
 
 namespace Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.People.Add;
@@ -7,10 +8,10 @@ namespace Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.People.Add;
 ///
 /// </summary>
 /// <param name="logger"></param>
-/// <param name="validatePersonCommandHandler"></param>
+/// <param name="mediator"></param>
 public class AddPersonCommandHandler(
     ILogger<AddPersonCommandHandler> logger,
-    IValidatePersonCommandHandler validatePersonCommandHandler) : IAddPersonCommandHandler
+    IMediator mediator) : IRequestHandler<AddPersonCommand, CommandResult<AddPersonCommandResultDto>>
 {
     /// <summary>
     ///
@@ -22,17 +23,16 @@ public class AddPersonCommandHandler(
         AddPersonCommand command,
         CancellationToken cancellationToken = default)
     {
-        logger.LogInformation("Entry: Adding person with name: {@NewAssetName}", command.Name);
+        logger.LogInformation("Entry: Adding person with name: {@NewPersonName}", command.Name);
 
-        var validatePersonCommand = new ValidatePersonCommand(command);
-        var validationResult = await validatePersonCommandHandler.HandleAsync(validatePersonCommand, cancellationToken);
+        var validationResult = await mediator.SendAsync(new ValidatePersonCommand(command), cancellationToken);
 
         if (!validationResult.IsSuccess)
         {
             return CommandResult.Failure<AddPersonCommandResultDto>(validationResult.Errors);
         }
 
-        var result = new AddPersonCommandResultDto(validationResult);
+        var result = new AddPersonCommandResultDto(command.Name);
         return CommandResult.WithResult(result);
     }
 }

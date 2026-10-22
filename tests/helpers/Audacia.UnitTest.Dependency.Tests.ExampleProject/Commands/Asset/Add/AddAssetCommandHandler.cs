@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using System.Text.Json;
+using Audacia.Mediator;
 using Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.Asset.Validate;
 using Microsoft.Extensions.Logging;
 
@@ -9,12 +10,12 @@ namespace Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.Asset.Add;
 ///
 /// </summary>
 /// <param name="logger"></param>
-/// <param name="validateAssetCommandHandler"></param>
+/// <param name="mediator"></param>
 /// <param name="httpClientFactory"></param>
 public class AddAssetCommandHandler(
     ILogger<AddAssetCommandHandler> logger,
-    IValidateAssetCommandHandler validateAssetCommandHandler,
-    IHttpClientFactory httpClientFactory) : IAddAssetCommandHandler
+    IMediator mediator,
+    IHttpClientFactory httpClientFactory) : IRequestHandler<AddAssetCommand, CommandResult<AddAssetCommandResultDto>>
 {
     /// <summary>
     ///
@@ -28,17 +29,15 @@ public class AddAssetCommandHandler(
     {
         logger.LogInformation("Entry: Adding asset with name: {@NewAssetName}", command.Name);
 
-        var validateAssetCommand = new ValidateAssetCommand(command);
-        var validationResult = await validateAssetCommandHandler.HandleAsync(validateAssetCommand, cancellationToken);
+        var validationResult = await mediator.SendAsync(new ValidateAssetCommand(command), cancellationToken);
 
         return !validationResult.IsSuccess
             ? CommandResult.Failure<AddAssetCommandResultDto>(validationResult.Errors)
-            : await AddAssetAsync(command, validationResult, cancellationToken);
+            : await AddAssetAsync(command, cancellationToken);
     }
 
     private async Task<CommandResult<AddAssetCommandResultDto>> AddAssetAsync(
         AddAssetCommand command,
-        CommandResult validationResult,
         CancellationToken cancellationToken)
     {
         using var httpClient = httpClientFactory.CreateClient();
@@ -55,7 +54,7 @@ public class AddAssetCommandHandler(
                 $"None successful code returned: {response.StatusCode}");
         }
 
-        var result = new AddAssetCommandResultDto(validationResult, response.StatusCode);
+        var result = new AddAssetCommandResultDto(command.Name, response.StatusCode);
         return CommandResult.WithResult(result);
     }
 }
