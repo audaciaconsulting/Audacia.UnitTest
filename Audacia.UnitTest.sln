@@ -23,7 +23,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{29EE0357-9016-4AA5-B0F1-8AF8EAAE1AFD}"
 	ProjectSection(SolutionItems) = preProject
 		Directory.Build.props = Directory.Build.props
-		global.json = global.json
 		LICENSE.txt = LICENSE.txt
 		package-icon.png = package-icon.png
 		README.md = README.md
@@ -38,6 +37,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "cicd", "cicd", "{38102DA0-D
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Audacia.UnitTest.Dependency.Mediator", "src\dependency\Audacia.UnitTest.Dependency.Mediator\Audacia.UnitTest.Dependency.Mediator.csproj", "{C8C9ED40-530F-4D03-8FAF-D041AD042793}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "dependency", "dependency", "{6A1F3C2E-9B4D-4E8A-A7C5-3D2B1E0F9C84}"
+	ProjectSection(SolutionItems) = preProject
+		src\dependency\CHANGELOG.md = src\dependency\CHANGELOG.md
+		src\dependency\Directory.Build.props = src\dependency\Directory.Build.props
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -74,13 +79,14 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{8455C499-2346-4DB8-A65A-9647E857C5FE} = {35389AA3-5A35-48E4-88A1-D212CF710DE5}
+		{8455C499-2346-4DB8-A65A-9647E857C5FE} = {6A1F3C2E-9B4D-4E8A-A7C5-3D2B1E0F9C84}
 		{5961AD99-15CB-4158-A83E-A54B2D6F9E90} = {12814FBC-1E3D-4D3E-B156-FD32905EA0F2}
 		{1BF31E8A-706C-407F-B5BF-E127A014350A} = {12814FBC-1E3D-4D3E-B156-FD32905EA0F2}
 		{2B42445D-181E-475B-B82B-2CAB29791D27} = {5961AD99-15CB-4158-A83E-A54B2D6F9E90}
-		{D317874D-B672-4343-9F46-64EA49790A7D} = {35389AA3-5A35-48E4-88A1-D212CF710DE5}
-		{CDD7EFE3-06C2-43AA-88AD-D9FDC03192B8} = {35389AA3-5A35-48E4-88A1-D212CF710DE5}
-		{C8C9ED40-530F-4D03-8FAF-D041AD042793} = {35389AA3-5A35-48E4-88A1-D212CF710DE5}
+		{D317874D-B672-4343-9F46-64EA49790A7D} = {6A1F3C2E-9B4D-4E8A-A7C5-3D2B1E0F9C84}
+		{CDD7EFE3-06C2-43AA-88AD-D9FDC03192B8} = {6A1F3C2E-9B4D-4E8A-A7C5-3D2B1E0F9C84}
+		{C8C9ED40-530F-4D03-8FAF-D041AD042793} = {6A1F3C2E-9B4D-4E8A-A7C5-3D2B1E0F9C84}
+		{6A1F3C2E-9B4D-4E8A-A7C5-3D2B1E0F9C84} = {35389AA3-5A35-48E4-88A1-D212CF710DE5}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {03F74A05-3E85-479B-8251-0F14A7CA2322}
