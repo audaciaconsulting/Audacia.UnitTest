@@ -1,8 +1,10 @@
-﻿using Audacia.Commands;
+﻿using Audacia.Mediator;
 using Audacia.UnitTest.Dependency.Blueprints;
 using Audacia.UnitTest.Dependency.Exceptions;
 using Audacia.UnitTest.Dependency.Http.Blueprints;
 using Audacia.UnitTest.Dependency.Http.Builders;
+using Audacia.UnitTest.Dependency.Mediator;
+using Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands;
 using Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.Asset.Add;
 using Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.Asset.Validate;
 using Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.Job.Add;
@@ -11,13 +13,21 @@ using Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.People.Add;
 using Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.People.Validate;
 using Audacia.UnitTest.Dependency.Tests.ExampleProject.Configuration;
 using Audacia.UnitTest.Dependency.Tests.ExampleProject.Notifications;
+using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using Shouldly;
 
 namespace Audacia.UnitTest.Dependency.Tests;
 
+/// <summary>
+/// Some tests here (e.g. Asset tests) use Audacia.UnitTest.Dependency.Mediator to resolve handler dependencies.
+/// Others (e.g. Job and Person tests) set up the handler 'manually' or via a service provider, to cover scenarios where Audacia.UnitTest.Dependency.Mediator is not used.
+/// See the Mediator folder for more tests using Audacia.UnitTest.Dependency.Mediator.
+/// </summary>
 public class TestTargetBuilderTests
 {
+    private static readonly System.Reflection.Assembly ExampleProjectAssembly = typeof(CommandResult).Assembly;
+
     [Fact]
     public async Task Should_throw_exception_when_missing_no_implementation_can_be_found_for_dependency_of_interface_when_builder_target()
     {
@@ -39,7 +49,9 @@ public class TestTargetBuilderTests
         // Act
         var target = new TestTargetBuilder()
             .WithBlueprint(httpClientFactoryBlueprint)
+            .WithMediator(ExampleProjectAssembly) // Uses Audacia.UnitTest.Dependency.Mediator to resolve the handler dependency
             .Build<AddAssetCommandHandler>();
+
         var result = await target.HandleAsync(addAssetCommand, TestContext.Current.CancellationToken);
 
         // Assert
@@ -65,6 +77,7 @@ public class TestTargetBuilderTests
         // Act
         var target = new TestTargetBuilder()
             .WithBlueprint(httpClientFactoryBlueprint)
+            .WithMediator(ExampleProjectAssembly)
             .Build<AddAssetCommandHandler>();
         var result = await target.HandleAsync(addAssetCommand, TestContext.Current.CancellationToken);
 
@@ -81,15 +94,13 @@ public class TestTargetBuilderTests
         // Arrange
         const string validationError = "Custom validation error";
         var addAssetCommand = new AddAssetCommand("Computer");
-        var validateAssetCommand = Substitute.For<IValidateAssetCommandHandler>();
-        validateAssetCommand.HandleAsync(new ValidateAssetCommand(addAssetCommand), TestContext.Current.CancellationToken)
-            .Returns(CommandResult.Failure(validationError));
         var httpClientFactoryBlueprint = new HttpClientFactoryBlueprint();
 
         // Act
         var target = new TestTargetBuilder()
             .WithBlueprint(httpClientFactoryBlueprint)
-            .With(validateAssetCommand)
+            .WithMediator(ExampleProjectAssembly)
+            .WithResponse<ValidateAssetCommand, CommandResult>(_ => CommandResult.Failure(validationError))
             .Build<AddAssetCommandHandler>();
         var result = await target.HandleAsync(addAssetCommand, TestContext.Current.CancellationToken);
 
@@ -119,18 +130,23 @@ public class TestTargetBuilderTests
 
     [Fact]
     public async Task
-        Should_be_able_to_create_target_with_interface_that_has_inheriting_type_and_logger_dependency_with_overide_for_dependency_type_for_failure()
+    Should_be_able_to_create_target_with_interface_that_has_inheriting_type_and_logger_dependency_with_overide_for_dependency_type_for_failure()
     {
         // Arrange
         var addPersonCommand = new AddPersonCommand("Joe Blog");
         var mockValidatePersonCommandHandler = Substitute.For<IValidatePersonCommandHandler>();
+
         mockValidatePersonCommandHandler.HandleAsync(Arg.Any<ValidatePersonCommand>(), TestContext.Current.CancellationToken)
             .Returns(CommandResult.Failure("Validation failed"));
 
+        await using var serviceProvider = CreateMediatorServiceProvider(mockValidatePersonCommandHandler);
+        var mediator = serviceProvider.GetRequiredService<IMediator>();
+
         // Act
         var target = new TestTargetBuilder()
-            .With(mockValidatePersonCommandHandler)
+            .With(mediator)
             .Build<AddPersonCommandHandler>();
+
         var result = await target.HandleAsync(addPersonCommand, TestContext.Current.CancellationToken);
 
         // Assert
@@ -144,9 +160,17 @@ public class TestTargetBuilderTests
     {
         // Arrange
         var addPersonCommand = new AddPersonCommand("Joe Blog");
+        var builder = new TestTargetBuilder();
+        var validationHandler = builder.Build<ValidatePersonCommandHandler>();
+
+        await using var serviceProvider = CreateMediatorServiceProvider(validationHandler);
+        var mediator = serviceProvider.GetRequiredService<IMediator>();
 
         // Act
-        var target = new TestTargetBuilder().Build<AddPersonCommandHandler>();
+        var target = builder
+            .With(mediator)
+            .Build<AddPersonCommandHandler>();
+
         var result = await target.HandleAsync(addPersonCommand, TestContext.Current.CancellationToken);
 
         // Assert
@@ -162,7 +186,7 @@ public class TestTargetBuilderTests
         // Act
         var target = () => new TestTargetBuilder()
             .WithBlueprint<IValidateJobCommandHandler>(null!)
-            .Build<AddJobCommandHandler>();
+            .Build<AddJobCommandHandler>(); // Uses a handler directly instead of Audacia.UnitTest.Dependency.Mediator
 
         // Assert
         target.ShouldThrow<ArgumentNullException>();
@@ -198,13 +222,13 @@ public class TestTargetBuilderTests
     public void Should_throw_exception_when_passing_dependency_to_builder_that_has_already_being_passed_to_the_builder()
     {
         // Arrange
-        var validateAssetCommand = new TestTargetBuilder().Build<ValidateAssetCommandHandler>();
+        var jobCommandHandler = Substitute.For<IAddJobCommandHandler>();
 
         // Act
         var target = () => new TestTargetBuilder()
-            .With<IValidateAssetCommandHandler>(validateAssetCommand)
-            .With<IValidateAssetCommandHandler>(validateAssetCommand)
-            .Build<AddPersonCommandHandler>();
+            .With(jobCommandHandler)
+            .With(jobCommandHandler)
+            .Build<AddJobCommandHandler>();
 
         // Assert
         target.ShouldThrow<TestTargetBuilderException>();
@@ -439,5 +463,20 @@ public class TestTargetBuilderTests
         return new BlueprintCustomisation<INotificationSender, bool>(
             sender => sender.SendAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()),
             result);
+    }
+
+    /// <summary>
+    /// Creates a service provider containing <see cref="IMediator"/> with only the given <paramref name="handler"/> registered,
+    /// so a target built by <see cref="TestTargetBuilder"/> can be called through the mediator.
+    /// This partially simulates the behavior of a real application, where AddMediator() registers all handlers.
+    /// </summary>
+    private static ServiceProvider CreateMediatorServiceProvider<TRequest, TResponse>(
+        IRequestHandler<TRequest, TResponse> handler)
+        where TRequest : IRequest<TResponse>
+    {
+        return new ServiceCollection()
+            .AddMediator()
+            .AddSingleton(handler)
+            .BuildServiceProvider();
     }
 }

@@ -1,4 +1,4 @@
-﻿using Audacia.Commands;
+﻿using Audacia.Mediator;
 
 namespace Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.Job.Add;
 
@@ -6,4 +6,4 @@ namespace Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.Job.Add;
 ///
 /// </summary>
 /// <param name="Name"></param>
-public record AddJobCommand(string Name) : ICommand;
+public record AddJobCommand(string Name) : IRequest<CommandResult<AddJobCommandResultDto>>;

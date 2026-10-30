@@ -1,16 +1,17 @@
-﻿using Audacia.Commands;
+﻿using Audacia.Mediator;
 using Microsoft.Extensions.Logging;
 
 namespace Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.Asset.Validate;
 
 /// <summary>
-/// Validates an asset that has being request to be added or updated.
+/// Validates an asset that has been requested to be added or updated.
 /// </summary>
 /// <param name="logger"></param>
-public class ValidateAssetCommandHandler(ILogger<ValidateAssetCommandHandler> logger) : IValidateAssetCommandHandler
+public class ValidateAssetCommandHandler(ILogger<ValidateAssetCommandHandler> logger)
+    : IRequestHandler<ValidateAssetCommand, CommandResult>
 {
     /// <summary>
-    /// Validate an asset that has being requested to be added or updated.
+    /// Validate an asset that has been requested to be added or updated.
     /// </summary>
     /// <param name="command"></param>
     /// <param name="cancellationToken"></param>

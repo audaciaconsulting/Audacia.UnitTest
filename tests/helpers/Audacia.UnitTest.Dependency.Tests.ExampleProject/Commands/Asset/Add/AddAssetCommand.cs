@@ -1,4 +1,4 @@
-﻿using Audacia.Commands;
+﻿using Audacia.Mediator;
 
 namespace Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.Asset.Add;
 
@@ -6,4 +6,4 @@ namespace Audacia.UnitTest.Dependency.Tests.ExampleProject.Commands.Asset.Add;
 ///
 /// </summary>
 /// <param name="Name"></param>
-public record AddAssetCommand(string Name) : ICommand;
+public record AddAssetCommand(string Name) : IRequest<CommandResult<AddAssetCommandResultDto>>;
