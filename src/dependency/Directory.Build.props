@@ -3,7 +3,7 @@
 
     <!-- Shared version for all packages in this folder. Record each release in CHANGELOG.md alongside this file. -->
     <PropertyGroup>
-        <Version>1.0.2</Version>
+        <Version>1.0.3</Version>
     </PropertyGroup>
 
     <PropertyGroup>
