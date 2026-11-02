@@ -2,6 +2,14 @@
 
 All packages in this folder share a single version, set in `Directory.Build.props`.
 
+## 1.0.4 - 2026-11-02
+- Updated Microsoft.Extensions.Http to version 10.0.14.
+- Updated Microsoft.Extensions.DependencyInjection to version 10.0.14.
+- Updated Microsoft.Extensions.Logging.Abstractions to version 10.0.14.
+- Updated Microsoft.Extensions.Options to version 10.0.14.
+- Updated Microsoft.NET.Test.Sdk to version 18.11.0.
+- Updated Microsoft.EntityFrameworkCore to version 10.0.14.
+
 ## 1.0.3 - 2026-10-30
 - Updated Microsoft.Extensions.Logging.Abstractions to version 10.0.13.
 - Updated Microsoft.Extensions.Options to version 10.0.13.
