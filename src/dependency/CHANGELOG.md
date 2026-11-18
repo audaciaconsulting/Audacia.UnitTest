@@ -2,6 +2,11 @@
 
 All packages in this folder share a single version, set in `Directory.Build.props`.
 
+## 1.0.6 - 2026-11-18
+
+### Changed
+- Updated Audacia.Azure.BlobStorage to version 2.0.2.
+
 ## 1.0.5 - 2026-11-09
 
 ### Changed
