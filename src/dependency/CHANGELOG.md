@@ -6,6 +6,10 @@ All packages in this folder share a single version, set in `Directory.Build.prop
 
 ### Changed
 - Updated Audacia.Azure.BlobStorage to version 2.0.2.
+- Updated Microsoft.Extensions.Http to version 10.0.15.
+- Updated Microsoft.Extensions.DependencyInjection to version 10.0.15.
+- Updated Microsoft.Extensions.Logging.Abstractions to version 10.0.15.
+- Updated Microsoft.Extensions.Options to version 10.0.15.
 
 ## 1.0.5 - 2026-11-09
 
